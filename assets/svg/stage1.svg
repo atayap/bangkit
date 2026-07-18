@@ -1,0 +1,21 @@
+<svg viewBox="0 0 240 360" xmlns="http://www.w3.org/2000/svg">
+  <g fill="none" stroke="#8A8A90" stroke-width="2" stroke-linecap="round" opacity="0.85">
+    <!-- head -->
+    <circle cx="120" cy="58" r="22"/>
+    <!-- neck -->
+    <line x1="120" y1="80" x2="120" y2="96"/>
+    <!-- spine/torso: thin -->
+    <path d="M120 96 C112 130, 112 170, 118 205"/>
+    <!-- shoulders (narrow, drooping) -->
+    <path d="M96 108 Q120 100 144 108"/>
+    <!-- arms: thin, hanging -->
+    <path d="M97 109 C88 140, 86 175, 92 208"/>
+    <path d="M143 109 C152 140, 154 175, 148 208"/>
+    <!-- hips -->
+    <path d="M104 205 Q118 212 132 205"/>
+    <!-- legs: thin -->
+    <path d="M110 207 C104 250, 100 295, 98 330"/>
+    <path d="M126 207 C130 250, 132 295, 134 330"/>
+    <!-- slouched posture line -->
+  </g>
+</svg>

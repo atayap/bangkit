@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bangkit — Dasbor</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="mark">
+      <div class="mark-glyph"></div>
+      <div class="mark-word">Bangkit</div>
+    </div>
+    <ul class="nav-list">
+      <li><a href="dashboard.html" class="active"><span class="nav-dot"></span> Dasbor</a></li>
+      <li><a href="scan.html"><span class="nav-dot"></span> Scan</a></li>
+      <li><a href="progress.html"><span class="nav-dot"></span> Progres</a></li>
+      <li><a href="settings.html"><span class="nav-dot"></span> Setelan</a></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div class="user-chip">
+        <span id="sidebar-name">—</span>
+        <span class="lv-badge" id="sidebar-level" style="margin-left:auto;">LV 1</span>
+      </div>
+      <button class="link-mini" id="logout-btn">Keluar</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">Ruang Pribadi</div>
+        <h1>Dasbor</h1>
+      </div>
+    </div>
+
+    <div class="level-hero">
+      <div class="level-num" id="hero-level-num">1</div>
+      <div class="level-info">
+        <div class="level-title">Level <span id="hero-level-num-2"></span></div>
+        <div class="level-stage" id="hero-stage-name">—</div>
+        <div class="xp-bar-track"><div class="xp-bar-fill" id="hero-xp-fill" style="width:0%"></div></div>
+        <div class="xp-label">
+          <span><span id="hero-xp-current">0</span> / <span id="hero-xp-needed">100</span> XP</span>
+          <span>Menuju level berikutnya</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-3" style="margin-bottom: 30px;">
+      <div class="card stat-block">
+        <div class="card-title">Total XP</div>
+        <div class="stat-num" id="stat-total-xp">0</div>
+      </div>
+      <div class="card stat-block">
+        <div class="card-title">Tugas Selesai</div>
+        <div class="stat-num" id="stat-tasks-done">0</div>
+      </div>
+      <div class="card stat-block">
+        <div class="card-title">Hari Berjalan</div>
+        <div class="stat-num" id="stat-days">1</div>
+      </div>
+    </div>
+
+    <div class="grid grid-2" style="margin-bottom: 30px; align-items:start;">
+      <div style="display:flex; flex-direction:column; gap:20px;">
+        <div class="card">
+          <div class="card-title">Tambah Tugas</div>
+          <form id="task-form" class="task-form">
+            <input type="text" id="task-input" placeholder="Apa yang mau kamu selesaikan?" required>
+            
+            <select id="task-time-type">
+              <option value="none">Tanpa Waktu</option>
+              <option value="range">Rentang Waktu</option>
+              <option value="duration">Durasi</option>
+            </select>
+
+            <!-- Rentang Waktu -->
+            <div id="time-range-group" class="task-time-group hidden">
+              <input type="time" id="task-start-time" title="Jam Mulai">
+              <span style="font-size: 12px; color: var(--ash);">s/d</span>
+              <input type="time" id="task-end-time" title="Jam Selesai">
+            </div>
+
+            <!-- Durasi -->
+            <div id="duration-group" class="task-time-group hidden">
+              <select id="task-duration">
+                <option value="15m">15 Menit</option>
+                <option value="30m">30 Menit</option>
+                <option value="45m">45 Menit</option>
+                <option value="1h">1 Jam</option>
+                <option value="2h">2 Jam</option>
+                <option value="3h">3 Jam</option>
+                <option value="custom">Lainnya...</option>
+              </select>
+              <input type="text" id="task-duration-custom" placeholder="contoh: 2 jam" style="display:none; width: 100px;">
+            </div>
+            
+            <select id="task-category">
+              <option value="fisik">Fisik</option>
+              <option value="otak">Otak</option>
+              <option value="disiplin">Disiplin</option>
+            </select>
+            <button type="submit" class="btn btn-sm">Tambah</button>
+          </form>
+          <ul class="task-list" id="task-list"></ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Asisten Jadwal AI</div>
+          <p style="font-size: 12.5px; color: var(--ash); margin-bottom: 12px;">
+            Tulis jadwal kegiatanmu. AI akan menganalisis tugas, kategori, dan waktu pengerjaannya secara otomatis.
+          </p>
+          <form id="ai-task-form" style="display:flex; gap:10px; flex-wrap:wrap;">
+            <input type="text" id="ai-task-input" placeholder="Buatkan jadwal ngoding aplikasi durasi 2 jam kategori disiplin" required style="flex:1; min-width:200px; background: var(--void); border:1px solid var(--hairline); color:var(--bone); padding: 12px 14px; font-size:14px; outline:none;">
+            <button type="submit" id="ai-task-btn" class="btn btn-sm">Buat dengan AI</button>
+          </form>
+          <div id="ai-task-status" style="margin-top: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--ash); min-height: 16px;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Atribut</div>
+        <div class="attr-row">
+          <div class="attr-name">Fisik</div>
+          <div class="attr-track"><div class="attr-fill" id="attr-fill-fisik" style="width:0%"></div></div>
+          <div class="attr-val" id="attr-val-fisik">0</div>
+        </div>
+        <div class="attr-row">
+          <div class="attr-name">Otak</div>
+          <div class="attr-track"><div class="attr-fill" id="attr-fill-otak" style="width:0%"></div></div>
+          <div class="attr-val" id="attr-val-otak">0</div>
+        </div>
+        <div class="attr-row">
+          <div class="attr-name">Disiplin</div>
+          <div class="attr-track"><div class="attr-fill" id="attr-fill-disiplin" style="width:0%"></div></div>
+          <div class="attr-val" id="attr-val-disiplin">0</div>
+        </div>
+        <div class="attr-row">
+          <div class="attr-name">Gizi</div>
+          <div class="attr-track"><div class="attr-fill" id="attr-fill-gizi" style="width:0%"></div></div>
+          <div class="attr-val" id="attr-val-gizi">0</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<button class="hint-btn" id="hint-btn" title="Bantuan / Pengenalan ulang">?</button>
+
+<script src="js/auth.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/tutorial.js"></script>
+<script src="js/app.js"></script>
+<script>
+  initDashboard();
+</script>
+</body>
+</html>

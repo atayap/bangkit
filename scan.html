@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bangkit — Scan Makanan</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="mark">
+      <div class="mark-glyph"></div>
+      <div class="mark-word">Bangkit</div>
+    </div>
+    <ul class="nav-list">
+      <li><a href="dashboard.html"><span class="nav-dot"></span> Dasbor</a></li>
+      <li><a href="scan.html" class="active"><span class="nav-dot"></span> Scan</a></li>
+      <li><a href="progress.html"><span class="nav-dot"></span> Progres</a></li>
+      <li><a href="settings.html"><span class="nav-dot"></span> Setelan</a></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div class="user-chip">
+        <span id="sidebar-name">—</span>
+        <span class="lv-badge" id="sidebar-level" style="margin-left:auto;">LV 1</span>
+      </div>
+      <button class="link-mini" id="logout-btn">Keluar</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">Gizi</div>
+        <h1>Scan Makanan</h1>
+      </div>
+    </div>
+
+    <div class="grid grid-2" style="align-items:start; margin-bottom:30px;">
+      <div class="card">
+        <div class="card-title">Foto Makanan</div>
+
+        <label class="dropzone" for="food-file-input">
+          <img id="food-preview" alt="" style="display:none;">
+          <div id="dropzone-placeholder">
+            <div class="dropzone-icon">＋</div>
+            <div>Ambil foto atau pilih dari galeri</div>
+          </div>
+        </label>
+        <input type="file" id="food-file-input" accept="image/*" capture="environment" hidden>
+
+        <button class="btn btn-block" id="detect-btn" disabled style="margin-top:16px;">Deteksi Makanan</button>
+        <div class="scan-status" id="scan-status"></div>
+
+        <div id="result-form" class="hidden" style="margin-top:22px;">
+          <div class="card-title">Hasil Deteksi — Perbaiki Kalau Perlu</div>
+          <div class="field">
+            <label for="f-nama">Nama Makanan</label>
+            <input type="text" id="f-nama">
+          </div>
+          <div class="field">
+            <label for="f-porsi">Porsi</label>
+            <input type="text" id="f-porsi">
+          </div>
+          <div class="grid grid-3" style="gap:12px;">
+            <div class="field">
+              <label for="f-kalori">Kalori (kkal)</label>
+              <input type="number" id="f-kalori" step="0.1">
+            </div>
+            <div class="field">
+              <label for="f-lemak">Lemak (g)</label>
+              <input type="number" id="f-lemak" step="0.1">
+            </div>
+            <div class="field">
+              <label for="f-karbo">Karbo (g)</label>
+              <input type="number" id="f-karbo" step="0.1">
+            </div>
+          </div>
+          <div class="field">
+            <label for="f-protein">Protein (g)</label>
+            <input type="number" id="f-protein" step="0.1">
+          </div>
+          <div class="field">
+            <label for="f-catatan">Catatan (opsional)</label>
+            <input type="text" id="f-catatan">
+          </div>
+          <button class="btn btn-block" id="save-food-btn">Simpan ke Log</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Log Hari Ini</div>
+        <div class="stat-num" id="today-log-total" style="margin-bottom:16px;">0 kkal hari ini</div>
+        <div id="today-log-list"></div>
+      </div>
+    </div>
+
+    <div class="form-note">
+      Estimasi kalori & gizi dari AI bersifat perkiraan, bukan pengukuran laboratorium — akurasinya tergantung kejelasan foto dan seberapa umum makanannya. Selalu cek dan perbaiki sebelum disimpan, terutama untuk masakan rumahan yang campurannya sulit ditebak dari foto.
+    </div>
+  </main>
+</div>
+
+<button class="hint-btn" id="hint-btn" title="Bantuan / Pengenalan ulang">?</button>
+
+<script src="js/auth.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/tutorial.js"></script>
+<script src="js/app.js"></script>
+<script src="js/nutrition.js"></script>
+<script>
+  initScanPage();
+</script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<svg viewBox="0 0 240 360" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="auraBright" cx="50%" cy="42%" r="60%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.26"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="120" cy="145" r="150" fill="url(#auraBright)"/>
+  <!-- mind rings around head -->
+  <circle cx="120" cy="52" r="34" fill="none" stroke="#FFFFFF" stroke-opacity="0.25" stroke-width="1"/>
+  <circle cx="120" cy="52" r="42" fill="none" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="1"/>
+  <g fill="none" stroke="#E8E8EC" stroke-width="2.6" stroke-linecap="round">
+    <circle cx="120" cy="52" r="23"/>
+    <line x1="120" y1="75" x2="120" y2="90"/>
+    <path d="M80 102 Q120 88 160 102"/>
+    <path d="M96 104 Q120 148 106 196"/>
+    <path d="M144 104 Q120 148 134 196"/>
+    <path d="M81 103 C68 128, 74 148, 66 168 C64 190, 72 206, 86 210"/>
+    <path d="M159 103 C172 128, 166 148, 174 168 C176 190, 168 206, 154 210"/>
+    <path d="M98 196 Q120 205 142 196"/>
+    <path d="M110 198 C104 246, 101 296, 99 332"/>
+    <path d="M130 198 C136 246, 139 296, 141 332"/>
+    <path d="M110 118 L110 158" stroke-opacity="0.6"/>
+    <path d="M130 118 L130 158" stroke-opacity="0.6"/>
+    <path d="M112 128 L128 128" stroke-opacity="0.45"/>
+    <path d="M112 142 L128 142" stroke-opacity="0.45"/>
+    <path d="M113 155 L127 155" stroke-opacity="0.45"/>
+    <!-- chest definition -->
+    <path d="M100 110 Q120 118 140 110" stroke-opacity="0.5"/>
+  </g>
+</svg>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bangkit — Masuk</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="auth-shell">
+  <div class="auth-card">
+    <div class="mark">
+      <div class="mark-glyph"></div>
+      <div class="mark-word">Bangkit</div>
+    </div>
+
+    <h1 class="auth-title">Masuk</h1>
+    <p class="auth-sub">Ruang pribadimu. Terkunci untukmu sendiri.</p>
+
+    <form id="login-form">
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" required autocomplete="email" placeholder="nama@email.com">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" required autocomplete="current-password" placeholder="••••••••">
+        <div class="field-error" id="error-msg"></div>
+      </div>
+      <button type="submit" class="btn btn-block">Masuk</button>
+    </form>
+
+    <p class="auth-foot">Belum punya akun? <a href="register.html">Daftar di sini</a></p>
+
+    <div class="form-note">
+      Data akun & progresmu hanya tersimpan di browser perangkat ini — tidak terkirim ke server manapun.
+    </div>
+  </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script>
+  redirectIfLoggedIn();
+
+  document.getElementById("login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const errEl = document.getElementById("error-msg");
+    errEl.style.display = "none";
+
+    const result = await loginUser({ email, password });
+    if (result.ok) {
+      window.location.href = "dashboard.html";
+    } else {
+      errEl.textContent = result.error;
+      errEl.style.display = "block";
+    }
+  });
+</script>
+</body>
+</html>

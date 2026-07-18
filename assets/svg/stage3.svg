@@ -1,0 +1,30 @@
+<svg viewBox="0 0 240 360" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="auraMed" cx="50%" cy="45%" r="58%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="120" cy="150" r="140" fill="url(#auraMed)"/>
+  <g fill="none" stroke="#D3D3D8" stroke-width="2.4" stroke-linecap="round">
+    <circle cx="120" cy="54" r="23"/>
+    <line x1="120" y1="77" x2="120" y2="92"/>
+    <!-- broader shoulders -->
+    <path d="M84 104 Q120 92 156 104"/>
+    <path d="M120 92 C110 128, 110 168, 118 200"/>
+    <!-- torso taper (V shape) -->
+    <path d="M96 106 Q120 150 108 198"/>
+    <path d="M144 106 Q120 150 132 198"/>
+    <!-- arms with slight bicep bulge -->
+    <path d="M85 105 C74 132, 78 150, 72 170 C70 190, 76 205, 88 208"/>
+    <path d="M155 105 C166 132, 162 150, 168 170 C170 190, 164 205, 152 208"/>
+    <path d="M100 198 Q120 206 140 198"/>
+    <path d="M112 200 C106 246, 103 294, 101 330"/>
+    <path d="M128 200 C133 246, 136 294, 138 330"/>
+    <!-- ab lines -->
+    <path d="M112 120 L112 160" stroke-opacity="0.55"/>
+    <path d="M128 120 L128 160" stroke-opacity="0.55"/>
+    <path d="M114 130 L126 130" stroke-opacity="0.4"/>
+    <path d="M114 145 L126 145" stroke-opacity="0.4"/>
+  </g>
+</svg>

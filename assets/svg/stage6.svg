@@ -1,0 +1,43 @@
+<svg viewBox="0 0 240 360" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="auraFull" cx="50%" cy="38%" r="66%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.42"/>
+      <stop offset="55%" stop-color="#FFFFFF" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="120" cy="135" r="175" fill="url(#auraFull)"/>
+  <!-- halo -->
+  <ellipse cx="120" cy="42" rx="46" ry="10" fill="none" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="1.4"/>
+  <ellipse cx="120" cy="42" rx="58" ry="14" fill="none" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="1"/>
+  <!-- rays -->
+  <g stroke="#FFFFFF" stroke-opacity="0.25" stroke-width="1.6">
+    <line x1="120" y1="4" x2="120" y2="-16"/>
+    <line x1="30" y1="60" x2="10" y2="44"/>
+    <line x1="210" y1="60" x2="230" y2="44"/>
+    <line x1="10" y1="145" x2="-14" y2="145"/>
+    <line x1="230" y1="145" x2="254" y2="145"/>
+    <line x1="40" y1="230" x2="20" y2="248"/>
+    <line x1="200" y1="230" x2="220" y2="248"/>
+  </g>
+  <g fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round">
+    <circle cx="120" cy="50" r="24"/>
+    <line x1="120" y1="74" x2="120" y2="88"/>
+    <path d="M70 100 Q120 82 170 100"/>
+    <path d="M90 102 Q120 148 102 192"/>
+    <path d="M150 102 Q120 148 138 192"/>
+    <path d="M71 101 C54 126, 64 146, 52 166 C50 192, 62 210, 82 214"/>
+    <path d="M169 101 C186 126, 176 146, 188 166 C190 192, 178 210, 158 214"/>
+    <path d="M94 192 Q120 203 146 192"/>
+    <path d="M106 194 C100 246, 97 300, 95 336"/>
+    <path d="M134 194 C140 246, 143 300, 145 336"/>
+    <path d="M107 114 L107 158" stroke-opacity="0.7"/>
+    <path d="M133 114 L133 158" stroke-opacity="0.7"/>
+    <path d="M109 124 L131 124" stroke-opacity="0.55"/>
+    <path d="M109 138 L131 138" stroke-opacity="0.55"/>
+    <path d="M110 152 L130 152" stroke-opacity="0.55"/>
+    <path d="M92 106 Q120 118 148 106" stroke-opacity="0.6"/>
+    <path d="M72 100 Q82 114 74 128" stroke-opacity="0.55"/>
+    <path d="M168 100 Q158 114 166 128" stroke-opacity="0.55"/>
+  </g>
+</svg>

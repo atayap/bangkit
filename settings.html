@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bangkit — Pengaturan</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="mark">
+      <div class="mark-glyph"></div>
+      <div class="mark-word">Bangkit</div>
+    </div>
+    <ul class="nav-list">
+      <li><a href="dashboard.html"><span class="nav-dot"></span> Dasbor</a></li>
+      <li><a href="scan.html"><span class="nav-dot"></span> Scan</a></li>
+      <li><a href="progress.html"><span class="nav-dot"></span> Progres</a></li>
+      <li><a href="settings.html" class="active"><span class="nav-dot"></span> Setelan</a></li>
+    </ul>
+    <div class="sidebar-foot">
+      <div class="user-chip">
+        <span id="sidebar-name">—</span>
+        <span class="lv-badge" id="sidebar-level" style="margin-left:auto;">LV 1</span>
+      </div>
+      <button class="link-mini" id="logout-btn">Keluar</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">Akun</div>
+        <h1>Pengaturan</h1>
+      </div>
+    </div>
+
+    <div class="card" style="max-width:520px;">
+      <div class="card-title">API Key OpenRouter</div>
+      <form id="settings-form">
+        <div class="field">
+          <label for="or-key">API Key</label>
+          <div style="display:flex; gap:8px;">
+            <input type="password" id="or-key" placeholder="sk-or-v1-...">
+            <button type="button" class="btn btn-ghost btn-sm" id="toggle-key-visibility">Lihat</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="or-model">Model (opsional)</label>
+          <input type="text" id="or-model" placeholder="openrouter/auto">
+        </div>
+        <button type="submit" class="btn btn-block">Simpan</button>
+        <button type="button" class="btn btn-ghost btn-block" id="clear-key-btn" style="margin-top:10px;">Hapus Key Tersimpan</button>
+        <div class="field-error" id="settings-status" style="display:none;"></div>
+      </form>
+
+      <div class="form-note">
+        Ambil API key di <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a> (buka tab baru). Key ini tersimpan hanya di browser perangkat ini — tidak pernah ditulis ke kode maupun ter-upload ke server lain. Kosongkan kolom Model untuk menggunakan model gratis <code>google/gemma-4-31b-it:free</code> secara default.
+      </div>
+    </div>
+  </main>
+</div>
+
+<button class="hint-btn" id="hint-btn" title="Bantuan / Pengenalan ulang">?</button>
+
+<script src="js/auth.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/tutorial.js"></script>
+<script src="js/app.js"></script>
+<script>
+  requireAuth();
+  renderSidebarUser();
+  initTutorial();
+  document.getElementById("logout-btn").addEventListener("click", logoutUser);
+
+  const user = getCurrentUser();
+  document.getElementById("or-key").value = user.orApiKey || "";
+  document.getElementById("or-model").value = user.orModel || "";
+
+  document.getElementById("toggle-key-visibility").addEventListener("click", (e) => {
+    const input = document.getElementById("or-key");
+    const show = input.type === "password";
+    input.type = show ? "text" : "password";
+    e.target.textContent = show ? "Sembunyikan" : "Lihat";
+  });
+
+  document.getElementById("settings-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const key = document.getElementById("or-key").value.trim();
+    const model = document.getElementById("or-model").value.trim();
+    updateCurrentUser(u => {
+      u.orApiKey = key;
+      u.orModel = model;
+    });
+    const status = document.getElementById("settings-status");
+    status.style.display = "block";
+    status.style.color = "var(--bone-dim)";
+    status.textContent = "Tersimpan.";
+    setTimeout(() => { status.style.display = "none"; }, 2000);
+  });
+
+  document.getElementById("clear-key-btn").addEventListener("click", () => {
+    updateCurrentUser(u => { 
+      u.orApiKey = ""; 
+      u.orModel = ""; 
+    });
+    document.getElementById("or-key").value = "";
+    document.getElementById("or-model").value = "";
+    const status = document.getElementById("settings-status");
+    status.style.display = "block";
+    status.style.color = "var(--bone-dim)";
+    status.textContent = "Key dihapus dari perangkat ini.";
+    setTimeout(() => { status.style.display = "none"; }, 2000);
+  });
+</script>
+</body>
+</html>

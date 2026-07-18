@@ -1,0 +1,23 @@
+<svg viewBox="0 0 240 360" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="auraFaint" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="120" cy="150" r="130" fill="url(#auraFaint)"/>
+  <g fill="none" stroke="#B7B7BC" stroke-width="2.2" stroke-linecap="round">
+    <circle cx="120" cy="56" r="22"/>
+    <line x1="120" y1="78" x2="120" y2="94"/>
+    <path d="M120 94 C114 128, 114 168, 119 202"/>
+    <path d="M92 106 Q120 96 148 106"/>
+    <path d="M93 107 C86 138, 85 172, 91 205"/>
+    <path d="M147 107 C154 138, 155 172, 149 205"/>
+    <path d="M102 202 Q119 210 136 202"/>
+    <path d="M111 204 C106 248, 103 294, 101 330"/>
+    <path d="M128 204 C132 248, 134 294, 136 330"/>
+    <!-- faint chest line, posture straightening -->
+    <path d="M108 112 L108 150" stroke-opacity="0.5"/>
+    <path d="M132 112 L132 150" stroke-opacity="0.5"/>
+  </g>
+</svg>
