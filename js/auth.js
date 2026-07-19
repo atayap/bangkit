@@ -1,13 +1,25 @@
 /* =========================================================
    BANGKIT — auth.js
-   Autentikasi sisi klien. Situs ini hosting statis (GitHub Pages)
-   tanpa server, jadi ini BUKAN keamanan tingkat produksi —
-   fungsinya sebagai gerbang pribadi, bukan brankas bank.
-   Password di-hash (SHA-256) sebelum disimpan, tidak plaintext.
+   Integrasi Firebase Authentication + Status Progres Lokal.
    ========================================================= */
 
 const DB_KEY = "bangkit_users";
 const SESSION_KEY = "bangkit_session";
+
+// Inisialisasi Firebase jika kredensial sudah diisi di firebase-config.js
+let useFirebase = false;
+
+if (typeof firebaseConfig !== "undefined" && isFirebaseConfigured) {
+  try {
+    firebase.initializeApp(firebaseConfig);
+    useFirebase = true;
+    console.log("Firebase initialized successfully.");
+  } catch (err) {
+    console.error("Gagal menginisialisasi Firebase:", err);
+  }
+} else {
+  console.warn("Konfigurasi Firebase belum diatur. Berjalan dalam mode Local Fallback.");
+}
 
 async function sha256(text) {
   const enc = new TextEncoder().encode(text);
@@ -31,42 +43,140 @@ function emailKey(email) {
   return email.trim().toLowerCase();
 }
 
+/* Fungsi Registrasi User Baru */
 async function registerUser({ name, email, password }) {
-  const users = getUsers();
   const key = emailKey(email);
-  if (users[key]) {
-    return { ok: false, error: "Email ini sudah terdaftar. Coba masuk saja." };
+
+  if (useFirebase) {
+    try {
+      const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+      // Simpan Display Name ke Firebase Profile
+      await userCredential.user.updateProfile({
+        displayName: name.trim()
+      });
+      
+      // Inisialisasi data progres lokal jika belum ada
+      const users = getUsers();
+      if (!users[key]) {
+        users[key] = {
+          name: name.trim(),
+          email: key,
+          createdAt: Date.now(),
+          xp: 0,
+          tasks: [],
+          tutorialSeen: false,
+        };
+        saveUsers(users);
+      }
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  } else {
+    // Mode Fallback Lokal (Password Hash)
+    const users = getUsers();
+    if (users[key]) {
+      return { ok: false, error: "Email ini sudah terdaftar di database lokal. Coba masuk saja." };
+    }
+    const passHash = await sha256(password);
+    users[key] = {
+      name: name.trim(),
+      email: key,
+      passHash,
+      createdAt: Date.now(),
+      xp: 0,
+      tasks: [],
+      tutorialSeen: false,
+    };
+    saveUsers(users);
+    return { ok: true };
   }
-  const passHash = await sha256(password);
-  users[key] = {
-    name: name.trim(),
-    email: key,
-    passHash,
-    createdAt: Date.now(),
-    xp: 0,
-    tasks: [],
-    tutorialSeen: false,
-  };
-  saveUsers(users);
-  return { ok: true };
 }
 
+/* Fungsi Login Email/Password */
 async function loginUser({ email, password }) {
-  const users = getUsers();
   const key = emailKey(email);
-  const user = users[key];
-  if (!user) {
-    return { ok: false, error: "Email belum terdaftar." };
+
+  if (useFirebase) {
+    try {
+      const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+      
+      // Buat entri profil lokal jika belum ada (misal dari register lain)
+      const users = getUsers();
+      if (!users[key]) {
+        users[key] = {
+          name: user.displayName || "Pengguna Baru",
+          email: key,
+          createdAt: Date.now(),
+          xp: 0,
+          tasks: [],
+          tutorialSeen: false,
+        };
+        saveUsers(users);
+      }
+      localStorage.setItem(SESSION_KEY, key);
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  } else {
+    // Mode Fallback Lokal
+    const users = getUsers();
+    const user = users[key];
+    if (!user) {
+      return { ok: false, error: "Email belum terdaftar secara lokal." };
+    }
+    const passHash = await sha256(password);
+    if (passHash !== user.passHash) {
+      return { ok: false, error: "Password salah." };
+    }
+    localStorage.setItem(SESSION_KEY, key);
+    return { ok: true };
   }
-  const passHash = await sha256(password);
-  if (passHash !== user.passHash) {
-    return { ok: false, error: "Password salah." };
-  }
-  localStorage.setItem(SESSION_KEY, key);
-  return { ok: true };
 }
 
-function logoutUser() {
+/* Fungsi Login dengan Google */
+async function loginWithGoogle() {
+  if (!useFirebase) {
+    return { ok: false, error: "Firebase belum terkonfigurasi. Edit file 'js/firebase-config.js' terlebih dahulu." };
+  }
+
+  const provider = new firebase.auth.GoogleAuthProvider();
+  try {
+    const result = await firebase.auth().signInWithPopup(provider);
+    const user = result.user;
+    const key = emailKey(user.email);
+
+    // Daftarkan progres lokal jika belum pernah login
+    const users = getUsers();
+    if (!users[key]) {
+      users[key] = {
+        name: user.displayName || "Pengguna Google",
+        email: key,
+        createdAt: Date.now(),
+        xp: 0,
+        tasks: [],
+        tutorialSeen: false,
+      };
+      saveUsers(users);
+    }
+    localStorage.setItem(SESSION_KEY, key);
+    return { ok: true, user: user };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+/* Fungsi Logout */
+async function logoutUser() {
+  if (useFirebase) {
+    try {
+      await firebase.auth().signOut();
+    } catch (err) {
+      console.error("Gagal melakukan sign out dari Firebase:", err);
+    }
+  }
   localStorage.removeItem(SESSION_KEY);
   window.location.href = "index.html";
 }

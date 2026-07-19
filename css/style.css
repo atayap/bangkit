@@ -628,3 +628,26 @@ button, input{ font-family: inherit; }
 @media (prefers-reduced-motion: reduce){
   *{ animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
+
+.btn-google {
+  background: var(--panel-2);
+  color: var(--bone);
+  border: 1px solid var(--hairline);
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+.btn-google:hover {
+  background: var(--bone);
+  color: var(--void);
+  border-color: var(--bone);
+  box-shadow: 0 0 20px rgba(255,255,255,0.08);
+}
+.google-icon {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}

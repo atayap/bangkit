@@ -1,69 +1,16 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bangkit — Daftar</title>
-<link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="0; url=index.html">
+  <title>Bangkit — Redirecting</title>
+  <script>
+    window.location.replace("index.html");
+  </script>
 </head>
 <body>
-
-<div class="auth-shell">
-  <div class="auth-card">
-    <div class="mark">
-      <div class="mark-glyph"></div>
-      <div class="mark-word">Bangkit</div>
-    </div>
-
-    <h1 class="auth-title">Buat Akun</h1>
-    <p class="auth-sub">Titik nol perjalananmu dimulai di sini.</p>
-
-    <form id="register-form">
-      <div class="field">
-        <label for="name">Nama</label>
-        <input type="text" id="name" required placeholder="Nama panggilanmu">
-      </div>
-      <div class="field">
-        <label for="email">Email</label>
-        <input type="email" id="email" required autocomplete="email" placeholder="nama@email.com">
-      </div>
-      <div class="field">
-        <label for="password">Password</label>
-        <input type="password" id="password" required minlength="6" autocomplete="new-password" placeholder="Minimal 6 karakter">
-        <div class="field-error" id="error-msg"></div>
-      </div>
-      <button type="submit" class="btn btn-block">Daftar</button>
-    </form>
-
-    <p class="auth-foot">Sudah punya akun? <a href="index.html">Masuk di sini</a></p>
-
-    <div class="form-note">
-      Password disimpan dalam bentuk hash (bukan teks biasa), namun ini situs statis tanpa server — anggap ini gerbang privasi pribadi, bukan pengaman tingkat bank.
-    </div>
+  <div style="font-family: sans-serif; text-align: center; margin-top: 100px; color: #555;">
+    Mengarahkan ke halaman masuk...
   </div>
-</div>
-
-<script src="js/auth.js"></script>
-<script>
-  redirectIfLoggedIn();
-
-  document.getElementById("register-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const name = document.getElementById("name").value;
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    const errEl = document.getElementById("error-msg");
-    errEl.style.display = "none";
-
-    const result = await registerUser({ name, email, password });
-    if (result.ok) {
-      const login = await loginUser({ email, password });
-      if (login.ok) window.location.href = "dashboard.html";
-    } else {
-      errEl.textContent = result.error;
-      errEl.style.display = "block";
-    }
-  });
-</script>
 </body>
 </html>
