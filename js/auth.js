@@ -192,7 +192,10 @@ async function syncFromFirebase(email) {
   const key = emailKey(email);
   const fbKey = sanitizeFirebaseKey(key);
   try {
-    const snapshot = await firebase.database().ref('users/' + fbKey).once('value');
+    const snapshotPromise = firebase.database().ref('users/' + fbKey).once('value');
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Sync timeout")), 3000));
+    
+    const snapshot = await Promise.race([snapshotPromise, timeoutPromise]);
     const data = snapshot.val();
     if (data) {
       const users = getUsers();
@@ -203,7 +206,7 @@ async function syncFromFirebase(email) {
       saveUsers(users);
     }
   } catch (err) {
-    console.error("Gagal sinkronisasi data dari Firebase:", err);
+    console.warn("Gagal/Skip sinkronisasi data dari Firebase (melanjutkan login lokal):", err.message);
   }
 }
 

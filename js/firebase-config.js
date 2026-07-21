@@ -8,6 +8,7 @@
 const firebaseConfig = {
   apiKey: "AIzaSyCVj-sRXy6J7mZmbOnka4wgf2Q7Vt-IXs0",
   authDomain: "bangkit-52e8c.firebaseapp.com",
+  databaseURL: "https://bangkit-52e8c-default-rtdb.firebaseio.com", // <-- TAMBAHKAN LINE INI
   projectId: "bangkit-52e8c",
   storageBucket: "bangkit-52e8c.firebasestorage.app",
   messagingSenderId: "416713048337",
