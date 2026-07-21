@@ -204,7 +204,6 @@ function saveFoodEntry() {
       id: entry.id + "-task",
       text: "Catat makan: " + nama,
       category: "gizi",
-      time: "",
       xp: XP_BY_CATEGORY.gizi,
       done: true,
       createdAt: Date.now(),
