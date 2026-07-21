@@ -116,6 +116,7 @@ async function loginUser({ email, password }) {
         saveUsers(users);
       }
       localStorage.setItem(SESSION_KEY, key);
+      await syncFromFirebase(key);
       return { ok: true };
     } catch (err) {
       return { ok: false, error: err.message };
@@ -162,6 +163,7 @@ async function loginWithGoogle() {
       saveUsers(users);
     }
     localStorage.setItem(SESSION_KEY, key);
+    await syncFromFirebase(key);
     return { ok: true, user: user };
   } catch (err) {
     return { ok: false, error: err.message };
@@ -179,6 +181,46 @@ async function logoutUser() {
   }
   localStorage.removeItem(SESSION_KEY);
   window.location.href = "index.html";
+}
+
+function sanitizeFirebaseKey(key) {
+  return key.replace(/[.#$[\]]/g, "_");
+}
+
+async function syncFromFirebase(email) {
+  if (!useFirebase) return;
+  const key = emailKey(email);
+  const fbKey = sanitizeFirebaseKey(key);
+  try {
+    const snapshot = await firebase.database().ref('users/' + fbKey).once('value');
+    const data = snapshot.val();
+    if (data) {
+      const users = getUsers();
+      users[key] = {
+        ...users[key],
+        ...data
+      };
+      saveUsers(users);
+    }
+  } catch (err) {
+    console.error("Gagal sinkronisasi data dari Firebase:", err);
+  }
+}
+
+async function syncToFirebase() {
+  if (!useFirebase) return;
+  const key = getCurrentUserKey();
+  if (!key) return;
+  const user = getCurrentUser();
+  if (!user) return;
+  const fbKey = sanitizeFirebaseKey(key);
+  try {
+    const syncData = { ...user };
+    delete syncData.passHash;
+    await firebase.database().ref('users/' + fbKey).set(syncData);
+  } catch (err) {
+    console.error("Gagal sinkronisasi data ke Firebase:", err);
+  }
 }
 
 function getCurrentUserKey() {
@@ -199,13 +241,26 @@ function updateCurrentUser(mutatorFn) {
   if (!users[key]) return null;
   mutatorFn(users[key]);
   saveUsers(users);
+  if (useFirebase) {
+    syncToFirebase();
+  }
   return users[key];
 }
 
 /* Panggil di awal setiap halaman yang butuh login */
 function requireAuth() {
-  if (!getCurrentUserKey() || !getCurrentUser()) {
+  const key = getCurrentUserKey();
+  if (!key || !getCurrentUser()) {
     window.location.href = "index.html";
+    return;
+  }
+  if (useFirebase && key) {
+    syncFromFirebase(key).then(() => {
+      if (typeof renderTasks === "function") renderTasks();
+      if (typeof renderLevelHero === "function") renderLevelHero();
+      if (typeof renderSidebarUser === "function") renderSidebarUser();
+      if (typeof initHistoryPage === "function") initHistoryPage();
+    });
   }
 }
 

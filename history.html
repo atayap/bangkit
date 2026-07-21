@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bangkit — Progres</title>
+<title>Bangkit — Riwayat Jadwal</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -17,9 +17,9 @@
     <ul class="nav-list">
       <li><a href="dashboard.html"><span class="nav-dot"></span> Dasbor</a></li>
       <li><a href="scan.html"><span class="nav-dot"></span> Scan</a></li>
-      <li><a href="progress.html" class="active"><span class="nav-dot"></span> Progres</a></li>
+      <li><a href="progress.html"><span class="nav-dot"></span> Progres</a></li>
       <li><a href="chat.html"><span class="nav-dot"></span> Diskusi</a></li>
-      <li><a href="history.html"><span class="nav-dot"></span> Riwayat</a></li>
+      <li><a href="history.html" class="active"><span class="nav-dot"></span> Riwayat</a></li>
       <li><a href="settings.html"><span class="nav-dot"></span> Setelan</a></li>
     </ul>
     <div class="sidebar-foot">
@@ -33,20 +33,30 @@
   <main class="main">
     <div class="page-head">
       <div>
-        <div class="eyebrow">Perjalanan</div>
-        <h1>Progres</h1>
+        <div class="eyebrow">Aktivitas</div>
+        <h1>Riwayat Jadwal</h1>
       </div>
     </div>
 
-    <div class="hero-figure">
-      <div id="hero-figure-svg"></div>
-      <h2 class="hero-figure-title" id="hero-figure-title">—</h2>
-      <div class="hero-figure-sub" id="hero-figure-sub">—</div>
-      <p class="hero-figure-desc" id="hero-figure-desc"></p>
+    <div class="grid grid-3" style="margin-bottom: 30px;">
+      <div class="card stat-block">
+        <div class="card-title">Total Jadwal Dibuat</div>
+        <div class="stat-num" id="stat-total-tasks">0</div>
+      </div>
+      <div class="card stat-block">
+        <div class="card-title">Total Tugas Selesai</div>
+        <div class="stat-num" id="stat-completed-tasks">0</div>
+      </div>
+      <div class="card stat-block">
+        <div class="card-title">Rasio Penyelesaian</div>
+        <div class="stat-num" id="stat-completion-rate">0%</div>
+      </div>
     </div>
 
-    <div class="card-title" style="margin: 0 0 14px 4px;">Enam Tahap Evolusi</div>
-    <div class="gallery" id="stage-gallery"></div>
+    <div class="card">
+      <div class="card-title">Semua Riwayat Tugas (Seumur Hidup)</div>
+      <ul class="task-list" id="history-task-list"></ul>
+    </div>
   </main>
 </div>
 
@@ -57,13 +67,14 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 <script src="js/firebase-config.js"></script>
+<script src="js/api-config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/levels.js"></script>
 <script src="js/tutorial.js"></script>
 <script src="js/app.js"></script>
-<script src="js/progress.js"></script>
+<script src="js/history.js"></script>
 <script>
-  initProgressPage();
+  initHistoryPage();
 </script>
 </body>
 </html>

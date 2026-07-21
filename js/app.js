@@ -61,6 +61,39 @@ function renderAttributes(tasks) {
   });
 }
 
+function isSameDay(d1, d2) {
+  return d1.getFullYear() === d2.getFullYear() &&
+         d1.getMonth() === d2.getMonth() &&
+         d1.getDate() === d2.getDate();
+}
+
+function startLiveClock() {
+  const dayEl = document.getElementById("live-day");
+  const dateEl = document.getElementById("live-date");
+  const timeEl = document.getElementById("live-time");
+  if (!dayEl || !dateEl || !timeEl) return;
+
+  const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+  const months = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ];
+
+  function update() {
+    const now = new Date();
+    dayEl.textContent = days[now.getDay()];
+    dateEl.textContent = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+    
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    timeEl.textContent = `${h}:${m}:${s}`;
+  }
+
+  update();
+  setInterval(update, 1000);
+}
+
 function renderTasks() {
   const user = getCurrentUser();
   if (!user) return;
@@ -68,13 +101,18 @@ function renderTasks() {
   if (!list) return;
   list.innerHTML = "";
 
-  if (user.tasks.length === 0) {
-    list.innerHTML = `<div class="empty-state">Belum ada tugas. Tambahkan satu di atas — setiap langkah kecil menambah XP.</div>`;
+  const today = new Date();
+  const todaysTasks = (user.tasks || []).filter(task => {
+    return isSameDay(new Date(task.createdAt), today);
+  });
+
+  if (todaysTasks.length === 0) {
+    list.innerHTML = `<div class="empty-state">Belum ada tugas hari ini. Tambahkan satu di atas — setiap langkah kecil menambah XP.</div>`;
     return;
   }
 
   // tampilkan yang belum selesai dulu, lalu yang sudah selesai (terbaru dulu)
-  const sorted = [...user.tasks].sort((a, b) => {
+  const sorted = [...todaysTasks].sort((a, b) => {
     if (a.done !== b.done) return a.done ? 1 : -1;
     return b.createdAt - a.createdAt;
   });
@@ -162,6 +200,7 @@ function initDashboard() {
   renderLevelHero();
   renderTasks();
   initTutorial();
+  startLiveClock();
 
   /* Toggle input kelompok waktu sesuai dropdown tipe */
   const timeTypeSelect = document.getElementById("task-time-type");
@@ -262,9 +301,9 @@ function initDashboard() {
   if (aiForm && aiInput && aiBtn && aiStatus) {
     aiForm.addEventListener("submit", async e => {
       e.preventDefault();
-      const user = getCurrentUser();
-      if (!user.orApiKey) {
-        aiStatus.textContent = "Belum ada API key OpenRouter. Masukkan dulu di halaman Setelan.";
+      const apiKey = getOpenRouterApiKey();
+      if (!apiKey) {
+        aiStatus.textContent = "Belum ada API key terpusat. Hubungi admin untuk menyetel API key di api-config.js.";
         aiStatus.style.color = "#d8b4b4";
         return;
       }
@@ -277,7 +316,8 @@ function initDashboard() {
       aiStatus.style.color = "var(--ash)";
 
       try {
-        const result = await callSchedulerAi(promptText, user.tasks, user.orApiKey);
+        const user = getCurrentUser();
+        const result = await callSchedulerAi(promptText, (user?.tasks || []), apiKey);
         if (result && result.action) {
           if (result.action === "add" && result.task) {
             addTask(result.task.text, result.task.category || "disiplin", result.task.time || "");

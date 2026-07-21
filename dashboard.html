@@ -19,6 +19,7 @@
       <li><a href="scan.html"><span class="nav-dot"></span> Scan</a></li>
       <li><a href="progress.html"><span class="nav-dot"></span> Progres</a></li>
       <li><a href="chat.html"><span class="nav-dot"></span> Diskusi</a></li>
+      <li><a href="history.html"><span class="nav-dot"></span> Riwayat</a></li>
       <li><a href="settings.html"><span class="nav-dot"></span> Setelan</a></li>
     </ul>
     <div class="sidebar-foot">
@@ -30,10 +31,15 @@
   </aside>
 
   <main class="main">
-    <div class="page-head">
+    <div class="page-head" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
       <div>
         <div class="eyebrow">Ruang Pribadi</div>
         <h1>Dasbor</h1>
+      </div>
+      <div class="live-date-container" style="text-align: right; font-family: var(--font-mono); font-size: 13px; color: var(--ash);">
+        <div id="live-day" style="font-weight: bold; color: var(--bone); font-size: 15px;">—</div>
+        <div id="live-date" style="margin: 2px 0;">—</div>
+        <div id="live-time" style="font-size: 11px; opacity: 0.8; color: #ff6b6b;">—</div>
       </div>
     </div>
 
@@ -154,7 +160,9 @@
 <!-- Firebase SDK Compat -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 <script src="js/firebase-config.js"></script>
+<script src="js/api-config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/levels.js"></script>
 <script src="js/tutorial.js"></script>

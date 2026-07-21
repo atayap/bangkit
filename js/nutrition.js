@@ -135,9 +135,9 @@ function initScanPage() {
   });
 
   detectBtn.addEventListener("click", async () => {
-    const user = getCurrentUser();
-    if (!user.orApiKey) {
-      statusEl.textContent = "Belum ada API key. Masukkan dulu di halaman Pengaturan.";
+    const apiKey = getOpenRouterApiKey();
+    if (!apiKey) {
+      statusEl.textContent = "Belum ada API key terpusat. Hubungi admin untuk menyetel API key di api-config.js.";
       statusEl.classList.add("scan-status-error");
       return;
     }
@@ -148,7 +148,7 @@ function initScanPage() {
     statusEl.textContent = "Menganalisis foto…";
 
     try {
-      const result = await callFoodVision(currentImageDataUrl, user.orApiKey, user.orModel);
+      const result = await callFoodVision(currentImageDataUrl, apiKey, getOpenRouterModel());
       fillResultForm(result);
       statusEl.textContent = "Terdeteksi ✓ Cek dan perbaiki dulu kalau ada yang salah sebelum disimpan.";
       document.getElementById("result-form").classList.remove("hidden");

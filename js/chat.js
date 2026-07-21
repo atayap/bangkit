@@ -20,6 +20,19 @@ function initChatPage() {
   // Inisialisasi Riwayat Obrolan dari Database User
   let chatHistory = user.chatHistory || [];
 
+  // Filter riwayat chat yang berumur lebih dari 30 hari (1 bulan)
+  const oneMonthAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+  let updated = false;
+
+  chatHistory = chatHistory.filter(msg => {
+    // Jika tidak ada timestamp (chat lama sebelum fitur ini ada), beri timestamp saat ini
+    if (!msg.timestamp) {
+      msg.timestamp = Date.now();
+      updated = true;
+    }
+    return msg.timestamp >= oneMonthAgo;
+  });
+
   // Pesan sambutan default jika baru pertama kali buka chat
   const defaultWelcome = {
     role: "assistant",
@@ -30,11 +43,16 @@ Saya siap membantu Anda:
 • Memberikan motivasi & rekomendasi pengaturan waktu (Time Management).
 • Mengevaluasi beban aktivitas harian Anda.
 
-Tulis apa saja tantangan produktivitas Anda hari ini, mari kita diskusikan bersama!`
+Tulis apa saja tantangan produktivitas Anda hari ini, mari kita diskusikan bersama!`,
+    timestamp: Date.now()
   };
 
   if (chatHistory.length === 0) {
     chatHistory.push(defaultWelcome);
+    updated = true;
+  }
+
+  if (updated) {
     updateCurrentUser(u => {
       u.chatHistory = chatHistory;
     });
@@ -44,18 +62,18 @@ Tulis apa saja tantangan produktivitas Anda hari ini, mari kita diskusikan bersa
   renderAllMessages(chatHistory);
 
   // Jika API Key belum disetel, tunjukkan note peringatan
-  if (!user.orApiKey) {
+  if (!getOpenRouterApiKey()) {
     const warningBubble = document.createElement("div");
     warningBubble.className = "chat-bubble assistant";
     warningBubble.style.borderColor = "rgba(220, 53, 69, 0.4)";
     warningBubble.style.color = "#ff6b6b";
-    warningBubble.innerHTML = "<strong>Pemberitahuan:</strong> API Key OpenRouter belum disetel. Hubungkan API Key Anda terlebih dahulu di halaman <strong><a href='settings.html' style='color:#ff6b6b; text-decoration: underline;'>Setelan</a></strong> agar dapat mengobrol dengan asisten.";
+    warningBubble.innerHTML = "<strong>Pemberitahuan:</strong> API Key OpenRouter terpusat belum disetel di berkas <code>js/api-config.js</code>. Hubungi admin/pengembang untuk menyetel API Key agar fitur asisten AI dapat digunakan.";
     chatContainer.appendChild(warningBubble);
     chatContainer.scrollTop = chatContainer.scrollHeight;
     
     // Nonaktifkan form input
     chatInput.disabled = true;
-    chatInput.placeholder = "Aktifkan API Key di Setelan terlebih dahulu...";
+    chatInput.placeholder = "Fitur dinonaktifkan (API Key belum diatur)...";
     sendBtn.disabled = true;
   }
 
@@ -69,7 +87,7 @@ Tulis apa saja tantangan produktivitas Anda hari ini, mari kita diskusikan bersa
     chatInput.value = "";
 
     // 1. Tambah & render pesan user
-    const userMessage = { role: "user", content: promptText };
+    const userMessage = { role: "user", content: promptText, timestamp: Date.now() };
     chatHistory.push(userMessage);
     appendSingleMessage("user", promptText);
     saveChatHistory(chatHistory);
@@ -82,7 +100,7 @@ Tulis apa saja tantangan produktivitas Anda hari ini, mari kita diskusikan bersa
     sendBtn.disabled = true;
 
     try {
-      const responseText = await callChatAi(promptText, chatHistory, user.orApiKey);
+      const responseText = await callChatAi(promptText, chatHistory, getOpenRouterApiKey());
       removeThinkingIndicator(thinkingDot);
 
       // Search for the [ACTION_DATA] marker in the response
@@ -103,7 +121,7 @@ Tulis apa saja tantangan produktivitas Anda hari ini, mari kita diskusikan bersa
       }
 
       // 3. Tambah & render pesan asisten
-      const assistantMessage = { role: "assistant", content: cleanText };
+      const assistantMessage = { role: "assistant", content: cleanText, timestamp: Date.now() };
       chatHistory.push(assistantMessage);
       appendSingleMessage("assistant", cleanText);
       saveChatHistory(chatHistory);

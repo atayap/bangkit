@@ -22,6 +22,10 @@ const TUTORIAL_STEPS = [
     body: "Foto makanan atau cemilanmu di halaman Scan Makanan — AI akan menebak nama dan kandungan gizinya. Salah tebak? Edit dulu sebelum disimpan, baru masuk ke log dan menambah XP kategori Gizi. Butuh API key OpenRouter di halaman Pengaturan untuk memakainya.",
   },
   {
+    title: "Obrolan Diskusi & Kebijakan Hapus",
+    body: "Gunakan fitur Diskusi untuk berkonsultasi dengan Asisten Penasihat mengenai produktivitas Anda. Demi efisiensi penyimpanan dan privasi perangkat Anda, seluruh riwayat obrolan ini akan otomatis dihapus secara berkala setiap 1 bulan (30 hari) sekali oleh sistem tanpa tombol penghapusan manual.",
+  },
+  {
     title: "Soal privasi",
     body: "Semua data (akun, tugas, XP) tersimpan hanya di browser perangkat ini — tidak dikirim ke server manapun. Situs ini dikunci lewat email & password. Ini cukup untuk menjaga privasi dari orang di sekitarmu, meski bukan pengaman tingkat bank. Jaga baik-baik perangkatmu.",
   },
