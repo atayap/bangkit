@@ -151,20 +151,9 @@ button, input{ font-family: inherit; }
   margin-bottom: 30px;
 }
 .mark-glyph{
-  width:30px; height:30px;
-  border:1px solid var(--glass-border);
-  background: var(--glass-fill);
-  box-shadow: var(--shadow-raised-sm);
-  border-radius:50%;
-  display:grid; place-items:center;
-  position:relative;
-}
-.mark-glyph::after{
-  content:"";
-  width:6px; height:6px;
-  background: var(--bone);
-  border-radius:50%;
-  box-shadow: 0 0 10px 2px rgba(255,255,255,0.6);
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
 }
 .mark-word{
   font-family: var(--font-display);
@@ -296,6 +285,17 @@ button, input{ font-family: inherit; }
   box-shadow: var(--shadow-clay-btn);
 }
 .nav-dot{ width:5px; height:5px; border-radius:50%; background: currentColor; }
+.nav-icon{
+  width: 18px; height: 18px;
+  stroke: currentColor; fill: none;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+  transition: stroke .2s var(--ease);
+}
+.nav-list a.active .nav-icon{
+  stroke: var(--void);
+}
 
 .sidebar-foot{ margin-top:auto; display:flex; flex-direction:column; gap:10px; }
 .user-chip{
@@ -647,58 +647,73 @@ button, input{ font-family: inherit; }
 @media (max-width: 900px){
   .app-shell{ flex-direction:column; }
 
-  /* sidebar desktop jadi top bar ramping: cuma logo + user chip */
+  /* Mobile Top Navbar Header */
   .sidebar{
-    width:100%; height:auto; position:sticky; top:0; z-index:30;
-    flex-direction:row; align-items:center; justify-content:space-between;
-    padding: 14px 18px; gap:14px;
-    border-right:none; border-bottom: 1px solid var(--glass-border);
-    border-radius: 0;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    position: sticky; top:0; z-index: 90;
+    width: 100%; height: 56px;
+    background: rgba(19, 19, 32, 0.96);
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-right: none;
+    border-bottom: 1px solid var(--glass-border);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    padding: 10px 16px;
+    display: flex; flex-direction: row; align-items: center; justify-content: space-between;
   }
-  .sidebar .mark{ margin-bottom:0; }
-  .sidebar .mark-word{ font-size: 17px; }
-  .sidebar .mark-glyph{ width:24px; height:24px; }
+  .sidebar .mark{ display: flex; align-items: center; gap: 10px; margin-bottom: 0; }
+  .sidebar .mark-word{ display: block; font-size: 15px; font-family: var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; }
+  .sidebar .mark-glyph{ display: grid; width: 26px; height: 26px; }
 
-  /* nav-list dipindah jadi bottom bar fixed, bukan baris sempit di atas */
+  .sidebar-foot{ margin-top: 0; display: flex; align-items: center; }
+  .user-chip{ display: flex; align-items: center; gap: 8px; padding: 5px 10px; font-size: 11px; background: var(--glass-fill); border: 1px solid var(--glass-border-soft); border-radius: var(--radius-pill); }
+  .user-chip span:first-child{ display: inline-block; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sidebar-foot .link-mini{ display: none; }
+
+  /* Mobile Fixed Bottom Navigation Bar */
   .nav-list{
-    position: fixed; left:12px; right:12px; bottom:12px; z-index:30;
-    flex-direction:row; justify-content:space-around;
-    background: linear-gradient(160deg, var(--glass-fill-strong), var(--glass-fill));
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
+    position: fixed; left:12px; right:12px; bottom:12px; z-index: 9999;
+    display: flex; flex-direction: row; justify-content: space-around; align-items: center;
+    background: rgba(22, 22, 34, 0.92);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
     border: 1px solid var(--glass-border);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-raised);
-    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
-    margin:0;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.15);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    margin: 0;
+    list-style: none;
   }
+  .nav-list li{ flex: 1; min-width: 0; text-align: center; }
   .nav-list a{
-    flex-direction:column; gap:5px; flex:1;
-    align-items:center; justify-content:center;
-    padding: 8px 6px; font-size: 11px;
-    border-radius: var(--radius-md);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    padding: 7px 2px 6px; font-size: 10px; font-weight: 500;
+    color: var(--ash);
+    border-radius: 14px;
+    transition: all .2s var(--ease);
+    text-decoration: none;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .nav-dot{ display:none; }
-
-  /* user chip + logout pindah ke top bar, versi ringkas */
-  .sidebar-foot{
-    display:flex; flex-direction:row; align-items:center; gap:10px;
-    margin-top:0;
+  .nav-list a:hover{ color: var(--bone); background: rgba(255,255,255,0.06); }
+  .nav-list a.active{
+    color: var(--void);
+    background: linear-gradient(160deg, #ffffff, var(--bone));
+    box-shadow: 0 4px 14px rgba(255,255,255,0.25), inset 0 1px 1px rgba(255,255,255,0.8);
+    font-weight: 700;
   }
-  .user-chip{ padding: 7px 10px; font-size:11px; }
-  .user-chip span:first-child{ display:none; } /* nama disembunyikan, badge level cukup di HP */
-  .sidebar-foot .link-mini{ padding: 8px 12px; font-size:10px; }
+  .nav-list a.active .nav-icon{ stroke: var(--void); }
+  .nav-dot{ display: none; }
+  .nav-icon{ width: 18px; height: 18px; flex-shrink: 0; }
 
-  /* beri ruang di bawah biar konten tidak ketutup bottom nav + hint button */
-  .main{ padding: 24px 18px 110px; }
+  /* beri ruang di atas & bawah agar konten tidak tertutup header atau bottom nav */
+  .main{ padding: 20px 16px 100px; }
+  .chat-shell{ height: calc(100vh - 210px); min-height: 380px; margin-top: 0; }
 
   .grid-3, .grid-2{ grid-template-columns: 1fr; }
   .level-hero{ flex-direction:column; text-align:center; padding: 26px 20px; gap:16px; }
   .level-num{ font-size: 52px; }
   .page-head h1{ font-size: 28px; }
 
-  .hint-btn{ bottom: 90px; right: 16px; width:46px; height:46px; }
+  .hint-btn{ bottom: 85px; right: 16px; width:44px; height:44px; }
 
   .gallery{ grid-template-columns: repeat(3,1fr); gap:10px; }
   .hero-figure{ padding: 34px 16px 28px; }
