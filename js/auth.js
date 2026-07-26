@@ -5,6 +5,11 @@
 
 const DB_KEY = "bangkit_users";
 const SESSION_KEY = "bangkit_session";
+const CHAT_HISTORY_LIMIT = 100;
+
+// Flag untuk cegah sinkronisasi berantai (infinite loop)
+let _syncingToFirebase = false;
+let _realtimeListener = null;
 
 // Inisialisasi Firebase jika kredensial sudah diisi di firebase-config.js
 let useFirebase = false;
@@ -43,6 +48,55 @@ function emailKey(email) {
   return email.trim().toLowerCase();
 }
 
+/* =========================================================
+   MERGE DATA — Gabung data lokal & Firebase dengan cerdas.
+   Array tasks & nutritionLog digabung berdasarkan ID,
+   bukan ditimpa mentah-mentah.
+   ========================================================= */
+function mergeUserData(local, remote) {
+  const merged = { ...local, ...remote };
+
+  // Gabung array tasks by ID (tidak ada duplikat)
+  if (remote.tasks || local.tasks) {
+    const taskMap = new Map();
+    (local.tasks || []).forEach(t => {
+      if (t && t.id) taskMap.set(t.id, t);
+    });
+    (remote.tasks || []).forEach(t => {
+      if (t && t.id) taskMap.set(t.id, t);
+    });
+    merged.tasks = Array.from(taskMap.values());
+  }
+
+  // Gabung nutritionLog by ID
+  if (remote.nutritionLog || local.nutritionLog) {
+    const logMap = new Map();
+    (local.nutritionLog || []).forEach(e => {
+      if (e && e.id) logMap.set(e.id, e);
+    });
+    (remote.nutritionLog || []).forEach(e => {
+      if (e && e.id) logMap.set(e.id, e);
+    });
+    merged.nutritionLog = Array.from(logMap.values());
+  }
+
+  // Gabung chatHistory — ambil 100 pesan terbaru
+  if (remote.chatHistory || local.chatHistory) {
+    const chatMap = new Map();
+    (local.chatHistory || []).forEach((m, i) => {
+      chatMap.set(m.timestamp ? m.timestamp + "_" + i : "local_" + i, m);
+    });
+    (remote.chatHistory || []).forEach((m, i) => {
+      chatMap.set(m.timestamp ? m.timestamp + "_" + i : "remote_" + i, m);
+    });
+    merged.chatHistory = Array.from(chatMap.values())
+      .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
+      .slice(-CHAT_HISTORY_LIMIT);
+  }
+
+  return merged;
+}
+
 /* Fungsi Registrasi User Baru */
 async function registerUser({ name, email, password }) {
   const key = emailKey(email);
@@ -65,6 +119,7 @@ async function registerUser({ name, email, password }) {
           xp: 0,
           tasks: [],
           tutorialSeen: false,
+          onboarded: false
         };
         saveUsers(users);
       }
@@ -87,6 +142,7 @@ async function registerUser({ name, email, password }) {
       xp: 0,
       tasks: [],
       tutorialSeen: false,
+      onboarded: false
     };
     saveUsers(users);
     return { ok: true };
@@ -112,6 +168,7 @@ async function loginUser({ email, password }) {
           xp: 0,
           tasks: [],
           tutorialSeen: false,
+          onboarded: false
         };
         saveUsers(users);
       }
@@ -159,6 +216,7 @@ async function loginWithGoogle() {
         xp: 0,
         tasks: [],
         tutorialSeen: false,
+        onboarded: false
       };
       saveUsers(users);
     }
@@ -172,8 +230,11 @@ async function loginWithGoogle() {
 
 /* Fungsi Logout */
 async function logoutUser() {
+  unsubscribeRealtime(); // Hentikan listener realtime
   if (useFirebase) {
     try {
+      // Sync data sebelum logout, pastikan data terakhir tersimpan
+      await syncToFirebase();
       await firebase.auth().signOut();
     } catch (err) {
       console.error("Gagal melakukan sign out dari Firebase:", err);
@@ -194,15 +255,13 @@ async function syncFromFirebase(email) {
   try {
     const snapshotPromise = firebase.database().ref('users/' + fbKey).once('value');
     const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Sync timeout")), 3000));
-    
+
     const snapshot = await Promise.race([snapshotPromise, timeoutPromise]);
     const data = snapshot.val();
     if (data) {
       const users = getUsers();
-      users[key] = {
-        ...users[key],
-        ...data
-      };
+      // Merge cerdas: tasks & nutritionLog digabung by ID, bukan timpa mentah
+      users[key] = mergeUserData(users[key] || {}, data);
       saveUsers(users);
     }
   } catch (err) {
@@ -212,18 +271,81 @@ async function syncFromFirebase(email) {
 
 async function syncToFirebase() {
   if (!useFirebase) return;
+  if (_syncingToFirebase) return; // Cegah infinite loop
   const key = getCurrentUserKey();
   if (!key) return;
   const user = getCurrentUser();
   if (!user) return;
   const fbKey = sanitizeFirebaseKey(key);
+
+  _syncingToFirebase = true;
   try {
-    const syncData = { ...user };
+    // Baca dulu data Firebase saat ini, lalu merge dengan lokal
+    // agar tidak ada tugas yang hilang antar perangkat
+    const snapshot = await firebase.database().ref('users/' + fbKey).once('value');
+    const remoteData = snapshot.val() || {};
+
+    const merged = mergeUserData(user, remoteData);
+    const syncData = { ...merged };
     delete syncData.passHash;
+
     await firebase.database().ref('users/' + fbKey).set(syncData);
   } catch (err) {
     console.error("Gagal sinkronisasi data ke Firebase:", err);
+  } finally {
+    _syncingToFirebase = false;
   }
+}
+
+/* =========================================================
+   REALTIME LISTENER — Firebase on() listener agar perubahan
+   dari perangkat lain langsung terlihat tanpa refresh.
+   ========================================================= */
+function subscribeRealtime() {
+  if (!useFirebase) return;
+  const key = getCurrentUserKey();
+  if (!key) return;
+  const fbKey = sanitizeFirebaseKey(key);
+
+  // Hapus listener lama dulu
+  unsubscribeRealtime();
+
+  _realtimeListener = firebase.database().ref('users/' + fbKey).on('value', (snapshot) => {
+    // Jika ini perubahan yang kita sendiri tulis, abaikan
+    if (_syncingToFirebase) return;
+
+    const data = snapshot.val();
+    if (!data) return;
+
+    const localKey = getCurrentUserKey();
+    if (!localKey) return;
+
+    const users = getUsers();
+    const before = users[localKey];
+    if (!before) return;
+
+    // Merge data Firebase ke lokal
+    users[localKey] = mergeUserData(before, data);
+    saveUsers(users);
+
+    // Re-render UI jika fungsi tersedia
+    if (typeof renderTasks === "function") renderTasks();
+    if (typeof renderLevelHero === "function") renderLevelHero();
+    if (typeof renderSidebarUser === "function") renderSidebarUser();
+    if (typeof renderTodayLog === "function") renderTodayLog();
+    if (typeof initHistoryPage === "function") initHistoryPage();
+    if (typeof renderProgressPage === "function") renderProgressPage();
+  });
+}
+
+function unsubscribeRealtime() {
+  if (!useFirebase || !_realtimeListener) return;
+  const key = getCurrentUserKey();
+  if (key) {
+    const fbKey = sanitizeFirebaseKey(key);
+    firebase.database().ref('users/' + fbKey).off('value', _realtimeListener);
+  }
+  _realtimeListener = null;
 }
 
 function getCurrentUserKey() {
@@ -253,23 +375,38 @@ function updateCurrentUser(mutatorFn) {
 /* Panggil di awal setiap halaman yang butuh login */
 function requireAuth() {
   const key = getCurrentUserKey();
-  if (!key || !getCurrentUser()) {
+  const user = getCurrentUser();
+  if (!key || !user) {
     window.location.href = "index.html";
     return;
   }
+  if (!user.onboarded) {
+    window.location.href = "onboarding.html";
+    return;
+  }
   if (useFirebase && key) {
+    // Langganan realtime — perubahan dari perangkat lain langsung terlihat
+    subscribeRealtime();
+
     syncFromFirebase(key).then(() => {
       if (typeof renderTasks === "function") renderTasks();
       if (typeof renderLevelHero === "function") renderLevelHero();
       if (typeof renderSidebarUser === "function") renderSidebarUser();
       if (typeof initHistoryPage === "function") initHistoryPage();
+      if (typeof renderTodayLog === "function") renderTodayLog();
+      if (typeof renderProgressPage === "function") renderProgressPage();
     });
   }
 }
 
 /* Panggil di halaman login/register: kalau sudah login, langsung lempar ke dashboard */
 function redirectIfLoggedIn() {
-  if (getCurrentUserKey() && getCurrentUser()) {
-    window.location.href = "dashboard.html";
+  const user = getCurrentUser();
+  if (getCurrentUserKey() && user) {
+    if (!user.onboarded) {
+      window.location.href = "onboarding.html";
+    } else {
+      window.location.href = "dashboard.html";
+    }
   }
 }

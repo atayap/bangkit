@@ -61,6 +61,28 @@ Tulis apa saja tantangan produktivitas Anda hari ini, mari kita diskusikan bersa
   // Render semua riwayat obrolan yang ada
   renderAllMessages(chatHistory);
 
+  const clearBtn = document.getElementById("clear-chat-btn");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      if (confirm("Apakah Anda yakin ingin membersihkan layar obrolan? (AI akan tetap mengingat konteks pembicaraan sebelumnya)")) {
+        updateCurrentUser(u => {
+          if (u.chatHistory) {
+            u.chatHistory.forEach((msg, idx) => {
+              // Biarkan pesan selamat datang (pesan pertama) tetap terlihat
+              if (idx === 0 && msg.role === "assistant" && msg.content.startsWith("Halo")) {
+                 msg.hidden = false;
+              } else {
+                 msg.hidden = true;
+              }
+            });
+          }
+        });
+        const userNow = getCurrentUser();
+        renderAllMessages(userNow.chatHistory);
+      }
+    });
+  }
+
   // Jika API Key belum disetel, tunjukkan note peringatan
   if (!getOpenRouterApiKey()) {
     const warningBubble = document.createElement("div");
@@ -207,6 +229,7 @@ function renderAllMessages(history) {
   chatContainer.innerHTML = "";
 
   history.forEach(msg => {
+    if (msg.hidden) return;
     let text = msg.content;
     const marker = "[ACTION_DATA]";
     const index = text.indexOf(marker);
@@ -233,8 +256,8 @@ function appendSingleMessage(role, content) {
 
 // Simpan history ke LocalStorage
 function saveChatHistory(history) {
-  // Hanya simpan 20 chat terakhir agar localstorage tidak penuh
-  const trimmed = history.slice(-25);
+  // Simpan hingga 100 chat terakhir
+  const trimmed = history.slice(-100);
   updateCurrentUser(u => {
     u.chatHistory = trimmed;
   });

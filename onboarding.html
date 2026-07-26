@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bangkit — Pengenalan Akun</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="auth-shell">
+  <div class="auth-card">
+    <div class="mark">
+      <img src="logo/bangkit.svg" class="mark-glyph" alt="Logo Bangkit">
+      <div class="mark-word">Bangkit</div>
+    </div>
+
+    <h1 class="auth-title">Atur Nama Anda</h1>
+    <p class="auth-sub">Masukkan nama panggilan (username) Anda agar kami dapat mengenali Anda di dalam dasbor.</p>
+
+    <div id="error-msg" class="field-error" style="margin-bottom: 14px;"></div>
+
+    <form id="onboarding-form">
+      <div class="field">
+        <label>Nama Panggilan</label>
+        <input type="text" id="username-input" placeholder="Misal: satria123" required minlength="3" maxlength="15" autocomplete="off">
+      </div>
+      <button type="submit" class="btn" style="width: 100%; margin-top: 14px;">Simpan & Lanjutkan</button>
+    </form>
+    
+    <div class="form-note" style="margin-top: 26px;">
+      Nama ini akan ditampilkan pada panel riwayat progres dan percakapan AI Anda.
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK Compat -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/auth.js"></script>
+<script>
+  // Pastikan pengguna sudah login, tapi jangan gunakan requireAuth() agar tidak terjadi infinite loop
+  const user = getCurrentUser();
+  if (!user) {
+    window.location.href = "index.html";
+  } else if (user.onboarded) {
+    // Jika ternyata sudah onboarded tapi nyasar ke sini, kembalikan ke dashboard
+    window.location.href = "dashboard.html";
+  }
+
+  // Pre-fill dengan nama dari Google jika ada
+  const input = document.getElementById("username-input");
+  if (user && user.name && user.name !== "Pengguna Google" && user.name !== "Pengguna Baru") {
+    input.value = user.name;
+  }
+
+  document.getElementById("onboarding-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const errEl = document.getElementById("error-msg");
+    errEl.style.display = "none";
+
+    const nameVal = input.value.trim();
+    if (nameVal.length < 3) {
+      errEl.textContent = "Nama panggilan minimal 3 karakter.";
+      errEl.style.display = "block";
+      return;
+    }
+    if (nameVal.length > 15) {
+      errEl.textContent = "Nama panggilan maksimal 15 karakter.";
+      errEl.style.display = "block";
+      return;
+    }
+
+    // Update profil lokal dan firebase
+    updateCurrentUser(u => {
+      u.name = nameVal;
+      u.onboarded = true;
+    });
+
+    // Sukses, lanjut ke dasbor
+    window.location.href = "dashboard.html";
+  });
+</script>
+</body>
+</html>

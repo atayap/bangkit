@@ -31,11 +31,19 @@
   </aside>
 
   <main class="main" style="display:flex; flex-direction:column;">
-    <div class="page-head">
+    <div class="page-head" style="display:flex; justify-content:space-between; align-items:center;">
       <div>
         <div class="eyebrow">Interaksi</div>
         <h1>Asisten Penasihat</h1>
       </div>
+      <button id="clear-chat-btn" class="btn btn-sm" title="Bersihkan Obrolan" style="background: transparent; color: var(--ash-dim); border: none; box-shadow: none; padding: 6px; cursor: pointer;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          <line x1="10" y1="11" x2="10" y2="17"></line>
+          <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>
+      </button>
     </div>
 
     <!-- Chat container -->
@@ -43,15 +51,18 @@
       <div class="chat-messages" id="chat-messages">
         <!-- Chat bubbles will go here -->
       </div>
-      <form class="chat-input-area" id="chat-form">
-        <input type="text" id="chat-input" placeholder="Tanyakan seputar efisiensi waktu, jadwal produktif, atau rekomendasi..." required autocomplete="off">
-        <button type="submit" class="btn btn-sm" id="chat-send-btn">Kirim</button>
-      </form>
+      <div class="chat-input-wrapper">
+        <form class="chat-input-area" id="chat-form">
+          <input type="text" id="chat-input" placeholder="Tanyakan seputar efisiensi waktu, jadwal produktif..." required autocomplete="off">
+          <button type="submit" class="btn btn-sm chat-send-btn" id="chat-send-btn" title="Kirim">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+          </button>
+        </form>
+      </div>
     </div>
   </main>
 </div>
 
-<button class="hint-btn" id="hint-btn" title="Bantuan / Pengenalan ulang">?</button>
 
 <!-- Firebase SDK Compat -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>

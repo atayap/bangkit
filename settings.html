@@ -38,12 +38,26 @@
       </div>
     </div>
 
-    <div class="card" style="max-width:520px; border-color: rgba(220, 53, 69, 0.25);">
-      <div class="card-title" style="color: #ff6b6b;">Akun & Sesi</div>
-      <p style="font-size:13px; color:var(--ash); margin-bottom:16px; line-height:1.5;">
-        Keluar dari akun Anda saat ini di perangkat ini. Semua data progres pengerjaan tugas & data gizi Anda tetap tersimpan secara privat.
-      </p>
-      <button type="button" class="btn btn-danger btn-block" id="logout-btn">Keluar dari Akun</button>
+    <div class="grid grid-2" style="align-items:start; margin-bottom:30px;">
+      <div class="card" style="max-width:100%;">
+        <div class="card-title">Profil</div>
+        <div class="field">
+          <label>Username</label>
+          <div id="setting-username" style="font-size:16px; font-weight:600; color:var(--bone);">—</div>
+        </div>
+        <div class="field" style="margin-top:14px;">
+          <label>Akun Google</label>
+          <div id="setting-email" style="font-size:13px; color:var(--ash); word-break:break-all;">—</div>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:100%; border-color: rgba(220, 53, 69, 0.25);">
+        <div class="card-title" style="color: #ff6b6b;">Akun & Sesi</div>
+        <p style="font-size:13px; color:var(--ash); margin-bottom:16px; line-height:1.5;">
+          Keluar dari akun Anda saat ini di perangkat ini. Semua data progres pengerjaan tugas & data gizi Anda tetap tersimpan secara privat.
+        </p>
+        <button type="button" class="btn btn-danger btn-block" id="logout-btn">Keluar dari Akun</button>
+      </div>
     </div>
   </main>
 </div>
@@ -64,6 +78,14 @@
   requireAuth();
   renderSidebarUser();
   initTutorial();
+
+  // Tampilkan Username & Email di halaman Pengaturan
+  const user = getCurrentUser();
+  if (user) {
+    document.getElementById("setting-username").textContent = user.name || "—";
+    document.getElementById("setting-email").textContent = user.email || "—";
+  }
+
   document.getElementById("logout-btn").addEventListener("click", logoutUser);
 </script>
 </body>
