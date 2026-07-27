@@ -56,7 +56,7 @@
     input.value = user.name;
   }
 
-  document.getElementById("onboarding-form").addEventListener("submit", (e) => {
+  document.getElementById("onboarding-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const errEl = document.getElementById("error-msg");
     errEl.style.display = "none";
@@ -73,14 +73,15 @@
       return;
     }
 
-    // Update profil lokal dan firebase
+    // Update profil lokal — data langsung tersimpan di localStorage (0ms).
+    // Firebase sync jalan otomatis di background tanpa perlu ditunggu.
     updateCurrentUser(u => {
       u.name = nameVal;
       u.onboarded = true;
     });
 
-    // Sukses, lanjut ke dasbor
-    window.location.href = "dashboard.html";
+    // Redirect LANGSUNG ke dasbor — tidak perlu nunggu Firebase
+    navigateTo("dashboard.html");
   });
 </script>
 </body>

@@ -57,10 +57,16 @@ function getStageForLevel(level) {
 }
 
 /* XP dasar per kategori tugas — mendorong variasi jenis tugas */
-const XP_BY_CATEGORY = { fisik: 25, otak: 25, disiplin: 15, gizi: 20 };
+const XP_BY_CATEGORY = { fisik: 25, otak: 25, disiplin: 15 };
 
 function totalXpFromTasks(tasks) {
   return tasks.filter(t => t.done).reduce((sum, t) => sum + t.xp, 0);
+}
+
+/* Total XP dari tugas + XP tambahan (misal dari scan makanan) */
+function totalXpFromUser(user) {
+  if (!user) return 0;
+  return totalXpFromTasks(user.tasks || []) + (user.xp || 0);
 }
 
 function attributeTotals(tasks) {

@@ -62,7 +62,7 @@
     
     const result = await loginWithGoogle();
     if (result.ok) {
-      window.location.href = "dashboard.html";
+      navigateTo("dashboard.html");
     } else {
       errEl.textContent = result.error;
       errEl.style.display = "block";

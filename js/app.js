@@ -19,7 +19,7 @@ function showToast(msg) {
 function renderSidebarUser() {
   const user = getCurrentUser();
   if (!user) return;
-  const { level } = computeLevel(totalXpFromTasks(user.tasks));
+  const { level } = computeLevel(totalXpFromUser(user));
   const nameEl = document.getElementById("sidebar-name");
   const lvEl = document.getElementById("sidebar-level");
   if (nameEl) nameEl.textContent = user.name || user.email;
@@ -29,7 +29,7 @@ function renderSidebarUser() {
 function renderLevelHero() {
   const user = getCurrentUser();
   if (!user) return;
-  const totalXp = totalXpFromTasks(user.tasks);
+  const totalXp = totalXpFromUser(user);
   const { level, xpIntoLevel, xpNeeded } = computeLevel(totalXp);
   const stage = getStageForLevel(level);
 

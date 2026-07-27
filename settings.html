@@ -39,6 +39,7 @@
     </div>
 
     <div class="grid grid-2" style="align-items:start; margin-bottom:30px;">
+      <!-- Kiri: Profil -->
       <div class="card" style="max-width:100%;">
         <div class="card-title">Profil</div>
         <div class="field">
@@ -51,12 +52,24 @@
         </div>
       </div>
 
-      <div class="card" style="max-width:100%; border-color: rgba(220, 53, 69, 0.25);">
-        <div class="card-title" style="color: #ff6b6b;">Akun & Sesi</div>
-        <p style="font-size:13px; color:var(--ash); margin-bottom:16px; line-height:1.5;">
-          Keluar dari akun Anda saat ini di perangkat ini. Semua data progres pengerjaan tugas & data gizi Anda tetap tersimpan secara privat.
-        </p>
-        <button type="button" class="btn btn-danger btn-block" id="logout-btn">Keluar dari Akun</button>
+      <!-- Kanan: Akun & Sesi + Hapus Akun -->
+      <div style="display:flex; flex-direction:column; gap:18px;">
+        <div class="card" style="max-width:100%;">
+          <div class="card-title">Akun & Sesi</div>
+          <p style="font-size:13px; color:var(--ash); margin-bottom:16px; line-height:1.5;">
+            Keluar dari akun Anda saat ini di perangkat ini. Semua data progres dan riwayat Anda tetap tersimpan secara privat.
+          </p>
+          <button type="button" class="btn btn-danger btn-block" id="logout-btn">Keluar dari Akun</button>
+        </div>
+
+        <div class="card" style="max-width:100%; border-color: rgba(220, 53, 69, 0.35);">
+          <div class="card-title" style="color: #ff6b6b;">Zona Berbahaya</div>
+          <p style="font-size:13px; color:var(--ash); margin-bottom:14px; line-height:1.5;">
+            Hapus akun Anda secara permanen beserta seluruh data progres, tugas, riwayat chat, dan log gizi. Tindakan ini <strong style="color:#ff6b6b;">tidak dapat dibatalkan</strong>.
+          </p>
+          <button type="button" class="btn btn-block" id="delete-account-btn" style="background: linear-gradient(160deg, rgba(255,80,80,0.3), rgba(200,30,30,0.2)); border: 1px solid rgba(220,53,69,0.35); color: #ff8a8a; font-weight: 600;">Hapus Akun & Data Permanen</button>
+          <div id="delete-status" style="display:none; font-family:var(--font-mono); font-size:11px; color:#ff8a8a; margin-top:12px; padding:10px 14px; border:1px solid rgba(220,53,69,0.2); border-radius:var(--radius-sm); background:rgba(220,53,69,0.06);"></div>
+        </div>
       </div>
     </div>
   </main>
@@ -87,6 +100,38 @@
   }
 
   document.getElementById("logout-btn").addEventListener("click", logoutUser);
+
+  // Hapus Akun Permanen — Konfirmasi 2 Langkah
+  document.getElementById("delete-account-btn").addEventListener("click", async () => {
+    const statusEl = document.getElementById("delete-status");
+
+    // Langkah 1: Konfirmasi peringatan
+    if (!confirm("⚠️ PERINGATAN!\n\nAkun Google, seluruh data progres, tugas, XP, level, riwayat chat, dan log gizi Anda akan DIHAPUS PERMANEN.\n\nTindakan ini TIDAK BISA DIBATALKAN.\n\nApakah Anda yakin ingin melanjutkan?")) {
+      return;
+    }
+
+    // Langkah 2: Ketik 'HAPUS' untuk verifikasi
+    const typed = prompt("Ketik 'HAPUS' (huruf kapital) untuk mengonfirmasi penghapusan permanen akun Anda:");
+    if (typed !== "HAPUS") {
+      if (typed !== null) {
+        statusEl.style.display = "block";
+        statusEl.textContent = "✗ Verifikasi gagal — ketik 'HAPUS' dengan huruf kapital.";
+        setTimeout(() => { statusEl.style.display = "none"; }, 3000);
+      }
+      return;
+    }
+
+    // Proses penghapusan
+    const btn = document.getElementById("delete-account-btn");
+    btn.disabled = true;
+    btn.textContent = "Menghapus...";
+    statusEl.style.display = "block";
+    statusEl.textContent = "⏳ Menghapus semua data Anda...";
+    statusEl.style.color = "#ffcc66";
+
+    await deleteUserAccount();
+    // Catatan: setelah ini user akan di-redirect ke index.html oleh deleteUserAccount()
+  });
 </script>
 </body>
 </html>

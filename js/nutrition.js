@@ -200,17 +200,10 @@ function saveFoodEntry() {
   updateCurrentUser(u => {
     if (!u.nutritionLog) u.nutritionLog = [];
     u.nutritionLog.push(entry);
-    u.tasks.push({
-      id: entry.id + "-task",
-      text: "Catat makan: " + nama,
-      category: "gizi",
-      xp: XP_BY_CATEGORY.gizi,
-      done: true,
-      createdAt: Date.now(),
-    });
+    u.xp = (u.xp || 0) + 20; // XP langsung tanpa bikin tugas
   });
 
-  showToast("Tersimpan ke log gizi — +" + XP_BY_CATEGORY.gizi + " XP");
+  showToast("Tersimpan ke log gizi — +20 XP");
   resetScanForm();
   renderTodayLog();
   renderSidebarUser();
@@ -270,6 +263,8 @@ function renderTodayLog() {
 function deleteFoodEntry(id) {
   updateCurrentUser(u => {
     u.nutritionLog = (u.nutritionLog || []).filter(e => e.id !== id);
+    u.xp = Math.max(0, (u.xp || 0) - 20); // Kembalikan XP
   });
   renderTodayLog();
+  renderSidebarUser();
 }

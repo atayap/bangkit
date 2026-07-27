@@ -148,8 +148,8 @@ Tulis apa saja tantangan produktivitas Anda hari ini, mari kita diskusikan bersa
       appendSingleMessage("assistant", cleanText);
       saveChatHistory(chatHistory);
 
-      // 4. Jalankan Aksi CRUD Tugas yang dikirimkan oleh AI
-      if (actionData && actionData.action) {
+      // 4. Jalankan Aksi CRUD Tugas yang dikirimkan oleh AI (dukung objek tunggal & array)
+      if (actionData && (actionData.action || Array.isArray(actionData))) {
         executeTaskAction(actionData);
       }
     } catch (err) {
@@ -166,38 +166,63 @@ Tulis apa saja tantangan produktivitas Anda hari ini, mari kita diskusikan bersa
 
 function executeTaskAction(actionData) {
   try {
-    if (actionData.action === "add" && actionData.task) {
-      const text = actionData.task.text || "";
-      const category = actionData.task.category || "disiplin";
-      const time = actionData.task.time || "";
-      addTask(text, category, time);
-    } 
-    else if (actionData.action === "edit" && actionData.taskId && actionData.task) {
-      updateCurrentUser(u => {
-        const t = u.tasks.find(x => x.id === actionData.taskId);
-        if (t) {
-          if (actionData.task.text) t.text = actionData.task.text;
-          if (actionData.task.category) t.category = actionData.task.category;
-          if (actionData.task.time !== undefined) t.time = actionData.task.time;
-        }
-      });
-      renderSidebarUser();
-    } 
-    else if (actionData.action === "delete" && actionData.taskId) {
-      deleteTask(actionData.taskId);
-    } 
-    else if (actionData.action === "complete" && actionData.taskId) {
-      const before = computeLevel(totalXpFromTasks(getCurrentUser().tasks)).level;
-      updateCurrentUser(u => {
-        const t = u.tasks.find(x => x.id === actionData.taskId);
-        if (t) t.done = (actionData.done !== undefined) ? actionData.done : !t.done;
-      });
-      const after = computeLevel(totalXpFromTasks(getCurrentUser().tasks)).level;
-      renderSidebarUser();
-      if (after > before) {
-        showToast(`✦ NAIK LEVEL — Kini Level ${after}: ${getStageForLevel(after).name}`);
+    // Dukung baik objek tunggal MAUPUN array aksi (batch)
+    const actions = Array.isArray(actionData) ? actionData : [actionData];
+    if (actions.length === 0) return;
+
+    let addedCount = 0, editedCount = 0, deletedCount = 0, completedCount = 0;
+    let levelUp = false;
+
+    actions.forEach(a => {
+      if (a.action === "add" && a.task) {
+        addTask(a.task.text || "", a.task.category || "disiplin", a.task.time || "");
+        addedCount++;
+      } 
+      else if (a.action === "edit" && a.taskId && a.task) {
+        updateCurrentUser(u => {
+          const t = u.tasks.find(x => x.id === a.taskId);
+          if (t) {
+            if (a.task.text) t.text = a.task.text;
+            if (a.task.category) t.category = a.task.category;
+            if (a.task.time !== undefined) t.time = a.task.time;
+          }
+        });
+        editedCount++;
+      } 
+      else if (a.action === "delete" && a.taskId) {
+        deleteTask(a.taskId);
+        deletedCount++;
+      } 
+      else if (a.action === "complete" && a.taskId) {
+        const before = computeLevel(totalXpFromUser(getCurrentUser())).level;
+        updateCurrentUser(u => {
+          const t = u.tasks.find(x => x.id === a.taskId);
+          if (t) t.done = (a.done !== undefined) ? a.done : !t.done;
+        });
+        const after = computeLevel(totalXpFromUser(getCurrentUser())).level;
+        completedCount++;
+        if (after > before) levelUp = true;
       }
+    });
+
+    // Re-render UI sekali untuk semua aksi
+    renderSidebarUser();
+    renderLevelHero();
+
+    // Toast ringkasan
+    const parts = [];
+    if (addedCount > 0) parts.push(`+${addedCount} tugas`);
+    if (editedCount > 0) parts.push(`${editedCount} diubah`);
+    if (deletedCount > 0) parts.push(`${deletedCount} dihapus`);
+    if (completedCount > 0) parts.push(`${completedCount} selesai`);
+    if (parts.length > 0) {
+      setTimeout(() => showToast(`✅ ${parts.join(', ')} berhasil`), 400);
     }
+    if (levelUp) {
+      const after = computeLevel(totalXpFromUser(getCurrentUser())).level;
+      setTimeout(() => showToast(`✦ NAIK LEVEL — Kini Level ${after}: ${getStageForLevel(after).name}`), 1000);
+    }
+
   } catch (err) {
     console.error("Gagal menjalankan sinkronisasi tugas chat:", err);
   }
@@ -294,37 +319,37 @@ async function callChatAi(userPrompt, history, apiKey) {
   const tasks = user.tasks || [];
   const tasksString = tasks.map(t => `- ID: ${t.id}, Text: "${t.text}", Category: "${t.category}", Time: "${t.time || ''}", Done: ${t.done}`).join("\n");
 
-  const SYSTEM_PROMPT = `Kamu adalah Asisten Diskusi & Penasihat tingkat tinggi di web aplikasi 'Bangkit'. 
-Tugasmu adalah:
-1. Membantu pengguna mereview jadwal harian agar hemat waktu & sehat.
-2. Memberikan motivasi disiplin yang tegas namun bersahabat, ringkas, dan praktis.
-3. Memberikan panduan pengembangan diri (mindset & action plan).
-4. Jika pengguna meminta untuk menambahkan, mengedit/mengubah, menghapus, atau menyelesaikan sebuah tugas (misal: "tambahkan tugas ngoding 2 jam", "hapus tugas olahraga", "oke apa selanjutnya", dll), kamu harus melakukan aksi tersebut dan memicu perubahan di database lokal.
+  const SYSTEM_PROMPT = `Kamu adalah Asisten Produktivitas & Manajemen Tugas di aplikasi 'Bangkit'. Tugasmu adalah membantu pengguna mengatur jadwal harian mereka secara EFEKTIF dan LANGSUNG BERTINDAK.
 
-PENTING & WAJIB:
-- Kamu HARUS LANGSUNG BERTINDAK nyata (dengan menyertakan tag [ACTION_DATA]) ketika pengguna menyuruh atau menyetujui penambahan atau perubahan tugas. Jangan pernah menunda-nunda tindakan atau meminta konfirmasi berulang kali untuk hal yang sudah jelas!
-- Jika teks jawabanmu mengklaim telah melakukan sesuatu (misal: "Tugas X sudah saya tambahkan", "Saya tambahkan tugas Y sekarang", "Status tugas Z berhasil diperbarui"), maka kamu WAJIB menyertakan tag [ACTION_DATA] di akhir pesanmu. Jangan berbohong di pesan teks tanpa melakukan aksi database riil!
+### ATURAN UTAMA — BACA INI DULU:
+1. Jika pengguna MEMINTA atau MENYETUJUI penambahan/ubah/hapus/cek tugas, kamu HARUS LANGSUNG EKSEKUSI dengan tag [ACTION_DATA]. Jangan tanya konfirmasi ulang — langsung kerjakan!
+2. Jika pengguna meminta MENAMBAH BANYAK TUGAS sekaligus (misal: "tambahin 3 tugas ya", "saya mau nambah: A, B, C"), kamu WAJIB gunakan format ARRAY untuk menambahkan semuanya dalam SATU RESPON.
+3. Jangan hanya bilang "oke sudah ditambahkan" tanpa menyertakan [ACTION_DATA] — kamu HARUS beneran menjalankan aksinya.
 
-Format Aksi Khusus:
-Jika pengguna berniat mengubah/mengelola tugas (tambah/edit/hapus/selesai), setelah pesan percakapan normalmu berakhir, tambahkan tag khusus '[ACTION_DATA]' diikuti persis satu baris JSON valid bermodel format di bawah (tanpa markdown box):
+### FORMAT [ACTION_DATA] — DUA BENTUK:
 
-[ACTION_DATA]{"action": "add"|"edit"|"delete"|"complete", "taskId": "ID_TUGAS", "task": {"text":"Deskripsi tugas singkat","category":"fisik"|"otak"|"disiplin","time":"⏱️ X Jam" atau "⏰ HH:MM - HH:MM" atau ""}, "done": true|false}
+**Bentuk 1 — Satu aksi:**
+[ACTION_DATA]{"action":"add","task":{"text":"Belajar React","category":"otak","time":"⏰ 10:00 - 12:00"}}
 
-Petunjuk parameter JSON:
-- action: 'add' (tambah tugas), 'edit' (ubah tugas), 'delete' (hapus tugas), 'complete' (tanda tugas selesai / checklist).
-- taskId: Wajib diisi untuk aksi 'edit', 'delete', dan 'complete'. Cocokkan dengan teliti dari Daftar Tugas Aktif Pengguna di bawah. Jika tidak ditemukan tugas yang cocok untuk diedit/dihapus, pilih action 'add' (tambah baru).
-- done: Boolean untuk menandai tugas selesai (complete).
-- time: Gunakan format "⏱️ X Jam / Menit" atau "⏰ HH:MM - HH:MM".
+**Bentuk 2 — Banyak aksi (ARRAY):**
+[ACTION_DATA][{"action":"add","task":{"text":"Belajar React","category":"otak","time":"⏰ 10:00 - 12:00"}},{"action":"add","task":{"text":"Lari pagi","category":"fisik","time":"⏱️ 30 Menit"}},{"action":"complete","taskId":"abc123"}]
 
-Aturan Pembicaraan:
-- Berbahasa Indonesia yang sopan, memotivasi, dan terstruktur.
-- Jangan bertele-tele. Jaga jawaban di bawah 3-4 paragraf agar nyaman dibaca di layar HP/Desktop.
+### PARAMETER:
+- action: "add" | "edit" | "delete" | "complete"
+- taskId: WAJIB untuk edit/delete/complete. Ambil dari daftar tugas di bawah.
+- task.text: Deskripsi tugas (wajib untuk add)
+- task.category: "fisik" | "otak" | "disiplin"
+- task.time: "⏰ HH:MM - HH:MM" atau "⏱️ X Jam/Menit" atau ""
 
-Daftar Tugas Aktif Pengguna Saat Ini:
-${tasksString || "(Belum ada tugas aktif)"}`;
+### GAYA BICARA:
+- Bahasa Indonesia yang hangat, memotivasi, tapi to the point.
+- Maksimal 2-3 paragraf. Jangan bertele-tele.
 
-  // Filter history: ambil maksimal 8 pesan terakhir agar context window efisien
-  const memoryMessages = history.slice(-8).map(h => ({
+### DAFTAR TUGAS SAAT INI:
+${tasksString || "(Belum ada tugas)"}`;
+
+  // Filter history: ambil maksimal 12 pesan terakhir agar AI paham konteks lebih baik
+  const memoryMessages = history.slice(-12).map(h => ({
     role: h.role === "assistant" ? "assistant" : "user",
     content: h.content
   }));

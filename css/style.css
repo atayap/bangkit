@@ -640,6 +640,41 @@ button, input{ font-family: inherit; }
 }
 .hint-btn:hover{ border-color: var(--bone-dim); box-shadow: var(--shadow-raised-sm), 0 0 20px rgba(255,255,255,0.12); }
 
+/* =========================================================
+   Top Loading Bar — strip ungu animasi di pojok atas
+   Muncul saat navigasi halaman (login, logout, dll).
+   ========================================================= */
+#page-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  z-index: 999999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  overflow: hidden;
+  background: rgba(124, 108, 255, 0.08);
+}
+#page-loader.active {
+  opacity: 1;
+}
+#page-loader .bar {
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--aura-violet), transparent);
+  box-shadow: 0 0 10px var(--aura-violet), 0 0 30px rgba(124, 108, 255, 0.3);
+  animation: loader-sweep 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes loader-sweep {
+  0% { left: -40%; }
+  100% { left: 140%; }
+}
+
 /* toast untuk level up */
 .toast{
   position: fixed; top: 26px; left:50%; transform: translateX(-50%) translateY(-20px);
