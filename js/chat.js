@@ -36,14 +36,7 @@ function initChatPage() {
   // Pesan sambutan default jika baru pertama kali buka chat
   const defaultWelcome = {
     role: "assistant",
-    content: `Halo ${user.name || "Kawan"}! Saya adalah Asisten Diskusi & Penasihat Produktivitas khusus untuk Anda di Bangkit. 
-
-Saya siap membantu Anda:
-• Menyusun prioritas jadwal pengerjaan yang efisien.
-• Memberikan motivasi & rekomendasi pengaturan waktu (Time Management).
-• Mengevaluasi beban aktivitas harian Anda.
-
-Tulis apa saja tantangan produktivitas Anda hari ini, mari kita diskusikan bersama!`,
+    content: `Halo ${user.name || "Kawan"}! Saya adalah Asisten Diskusi & Penasihat Produktivitas khusus untuk Anda di Bangkit. \n\nSaya siap membantu Anda:\n• Menyusun prioritas jadwal pengerjaan yang efisien.\n• Memberikan motivasi & rekomendasi pengaturan waktu (Time Management).\n• Mengevaluasi beban aktivitas harian Anda.\n\nTulis apa saja tantangan produktivitas Anda hari ini, mari kita diskusikan bersama!`,
     timestamp: Date.now()
   };
 
@@ -122,24 +115,38 @@ Tulis apa saja tantangan produktivitas Anda hari ini, mari kita diskusikan bersa
     sendBtn.disabled = true;
 
     try {
-      const responseText = await callChatAi(promptText, chatHistory, getOpenRouterApiKey());
-      removeThinkingIndicator(thinkingDot);
+      // Apakah user meminta aksi tugas? Kita cek dari prompt-nya.
+      const userWantsTaskAction = detectTaskActionRequest(promptText);
 
-      // Search for the [ACTION_DATA] marker in the response
+      // Panggil AI — maksimal 2x percobaan jika perlu
+      let responseText = await callChatAi(promptText, chatHistory, getOpenRouterApiKey());
+      let actionData = parseActionData(responseText);
+
+      // Retry logic: jika user minta aksi tugas tapi AI tidak kasih [ACTION_DATA],
+      // kirim ulang dengan instruksi tambahan yang lebih tegas (1x retry)
+      if (userWantsTaskAction && !actionData) {
+        console.log("AI lupa kasih [ACTION_DATA], retry dengan pengingat...");
+        // Update indikator: proses ulang
+        removeThinkingIndicator(thinkingDot);
+        const retryDot = showThinkingIndicator();
+        retryDot.id = "thinking-indicator-retry";
+
+        // Kirim ulang dengan pengingat keras
+        responseText = await retryWithActionReminder(promptText, responseText, chatHistory, getOpenRouterApiKey());
+        actionData = parseActionData(responseText);
+
+        removeThinkingIndicator(retryDot);
+      }
+
+      removeThinkingIndicator(thinkingDot);
+      removeThinkingIndicator(document.getElementById("thinking-indicator-retry"));
+
+      // Bersihkan [ACTION_DATA] dari teks yang ditampilkan ke user
       let cleanText = responseText;
-      let actionData = null;
-      
       const marker = "[ACTION_DATA]";
       const markerIndex = responseText.indexOf(marker);
       if (markerIndex !== -1) {
         cleanText = responseText.substring(0, markerIndex).trim();
-        const jsonStr = responseText.substring(markerIndex + marker.length).trim();
-        try {
-          const jsonClean = jsonStr.replace(/```json/g, "").replace(/```/g, "").trim();
-          actionData = JSON.parse(jsonClean);
-        } catch (e) {
-          console.warn("Gagal parse action data JSON:", e);
-        }
       }
 
       // 3. Tambah & render pesan asisten
@@ -148,12 +155,13 @@ Tulis apa saja tantangan produktivitas Anda hari ini, mari kita diskusikan bersa
       appendSingleMessage("assistant", cleanText);
       saveChatHistory(chatHistory);
 
-      // 4. Jalankan Aksi CRUD Tugas yang dikirimkan oleh AI (dukung objek tunggal & array)
+      // 4. Jalankan Aksi CRUD Tugas yang dikirimkan oleh AI
       if (actionData && (actionData.action || Array.isArray(actionData))) {
         executeTaskAction(actionData);
       }
     } catch (err) {
       removeThinkingIndicator(thinkingDot);
+      removeThinkingIndicator(document.getElementById("thinking-indicator-retry"));
       appendSingleMessage("assistant", "Maaf, terjadi kendala saat memproses jawaban: " + (err.message || "Pastikan API key valid & coba sesaat lagi."));
     } finally {
       // Hidupkan kembali input
@@ -162,6 +170,108 @@ Tulis apa saja tantangan produktivitas Anda hari ini, mari kita diskusikan bersa
       chatInput.focus();
     }
   });
+}
+
+/**
+ * Mendeteksi apakah user meminta aksi tugas (tambah/hapus/edit/selesai)
+ * berdasarkan kombinasi kata kerja aksi + kata benda tugas dalam prompt.
+ * Mensyaratkan KEDUANYA agar tidak false-positive.
+ */
+function detectTaskActionRequest(prompt) {
+  const lower = prompt.toLowerCase();
+  const actionVerbs = ["tambah", "buat", "buatkan", "masukkan", "input", "simpan", "hapus", "delete", "selesai", "complete", "centang", "ubah", "edit", "ganti"];
+  const taskNouns = ["tugas", "jadwal", "task", "daftar", "list", "schedule"];
+  return actionVerbs.some(v => lower.includes(v)) && taskNouns.some(n => lower.includes(n));
+}
+
+// Hapus TASK_ACTION_KEYWORDS karena sudah tidak dipakai (diganti detectTaskActionRequest)
+
+
+/**
+ * Parse [ACTION_DATA] dari response teks AI.
+ * Mengembalikan null jika tidak ditemukan.
+ */
+function parseActionData(responseText) {
+  const marker = "[ACTION_DATA]";
+  const markerIndex = responseText.indexOf(marker);
+  if (markerIndex === -1) return null;
+
+  const jsonStr = responseText.substring(markerIndex + marker.length).trim();
+  try {
+    const jsonClean = jsonStr.replace(/```json/g, "").replace(/```/g, "").trim();
+    const parsed = JSON.parse(jsonClean);
+    // Validasi: harus punya .action atau array
+    if (parsed && (parsed.action || Array.isArray(parsed))) {
+      return parsed;
+    }
+    return null;
+  } catch (e) {
+    console.warn("Gagal parse action data JSON:", e);
+    return null;
+  }
+}
+
+/**
+ * Retry: kirim ulang ke API dengan pengingat bahwa AI WAJIB menyertakan [ACTION_DATA].
+ * Menyertakan response pertama AI sebagai konteks agar tidak mengulang dari awal.
+ */
+async function retryWithActionReminder(originalPrompt, previousAiResponse, history, apiKey) {
+  const user = getCurrentUser();
+  const tasks = user.tasks || [];
+  const tasksString = tasks.map(t => `- ID: ${t.id}, Text: "${t.text}", Category: "${t.category}", Time: "${t.time || ''}", Done: ${t.done}`).join("\n");
+
+  const retryPrompt = `KAMU SEBELUMNYA TELAH MENJAWAB TAPI LUPA MENYERTAKAN [ACTION_DATA].
+
+### PENTING! — KONSEKUENSI:
+Jika kamu tidak menyertakan [ACTION_DATA], maka TIDAK ADA TUGAS YANG TEREKSEKUSI DI SISTEM. Jawabanmu hanya akan menjadi teks kosong tanpa efek apapun.
+
+### PERINTAH ULANG:
+1. User meminta: "${originalPrompt}"
+2. Jawabanmu sebelumnya: "${previousAiResponse}"
+3. SEKARANG: Tulis ulang jawabanmu, tapi KALI INI pastikan ada [ACTION_DATA] di akhir!
+
+### FORMAT YANG BENAR — CONTOH:
+Untuk SATU tugas:
+[ACTION_DATA]{"action":"add","task":{"text":"Belajar React","category":"otak","time":"⏰ 10:00 - 12:00"}}
+
+Untuk BANYAK tugas (WAJIB ARRAY):
+[ACTION_DATA][{"action":"add","task":{"text":"Tugas 1","category":"disiplin","time":""}},{"action":"add","task":{"text":"Tugas 2","category":"disiplin","time":""}}]
+
+### TUGAS SAAT INI:
+${tasksString || "(Belum ada tugas)"}
+
+### BALAS SEKARANG — dengan [ACTION_DATA] di akhir.`;
+
+  const memoryMessages = history.slice(-6).map(h => ({
+    role: h.role === "assistant" ? "assistant" : "user",
+    content: h.content
+  }));
+
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + apiKey,
+      "Content-Type": "application/json",
+      "HTTP-Referer": window.location.origin,
+      "X-Title": "Bangkit - Diskusi",
+    },
+    body: JSON.stringify({
+      model: "openrouter/auto",
+      messages: [
+        { role: "system", content: retryPrompt },
+        ...memoryMessages.slice(-4)
+      ]
+    })
+  });
+
+  if (!res.ok) {
+    const bodyText = await res.text().catch(() => "");
+    throw new Error(`Server returned code ${res.status}: ${bodyText.slice(0, 100)}`);
+  }
+
+  const data = await res.json();
+  const content = data?.choices?.[0]?.message?.content;
+  return content || previousAiResponse;
 }
 
 function executeTaskAction(actionData) {
@@ -242,7 +352,7 @@ function parseBasicMarkdown(text) {
   escaped = escaped.replace(/\*(.*?)\*/g, "<em>$1</em>");
 
   // Bullet list (baris baru berawalan • / * / -)
-  escaped = escaped.replace(/^\s*[\*\-•]\s*(.*?)$/gm, "• $1");
+  escaped = escaped.replace(/^\s*[\*\-\•]\s*(.*?)$/gm, "• $1");
 
   return escaped;
 }
@@ -319,34 +429,67 @@ async function callChatAi(userPrompt, history, apiKey) {
   const tasks = user.tasks || [];
   const tasksString = tasks.map(t => `- ID: ${t.id}, Text: "${t.text}", Category: "${t.category}", Time: "${t.time || ''}", Done: ${t.done}`).join("\n");
 
-  const SYSTEM_PROMPT = `Kamu adalah Asisten Produktivitas & Manajemen Tugas di aplikasi 'Bangkit'. Tugasmu adalah membantu pengguna mengatur jadwal harian mereka secara EFEKTIF dan LANGSUNG BERTINDAK.
+  const SYSTEM_PROMPT = `Kamu adalah Asisten Produktivitas & Manajemen Tugas di aplikasi 'Bangkit'.
 
-### ATURAN UTAMA — BACA INI DULU:
-1. Jika pengguna MEMINTA atau MENYETUJUI penambahan/ubah/hapus/cek tugas, kamu HARUS LANGSUNG EKSEKUSI dengan tag [ACTION_DATA]. Jangan tanya konfirmasi ulang — langsung kerjakan!
-2. Jika pengguna meminta MENAMBAH BANYAK TUGAS sekaligus (misal: "tambahin 3 tugas ya", "saya mau nambah: A, B, C"), kamu WAJIB gunakan format ARRAY untuk menambahkan semuanya dalam SATU RESPON.
-3. Jangan hanya bilang "oke sudah ditambahkan" tanpa menyertakan [ACTION_DATA] — kamu HARUS beneran menjalankan aksinya.
+====================================================
+⚠️  PERINGATAN PALING PENTING — BACA INI DULU
+====================================================
+Jika user MEMINTA, MENYURUH, atau MENYETUJUI aksi apa pun terkait tugas
+(tambah, buat, hapus, selesai, ubah, edit, checklist, dsb.),
+maka kamu WAJIB menyertakan [ACTION_DATA] di AKHIR responmu.
 
-### FORMAT [ACTION_DATA] — DUA BENTUK:
+➡️ TANPA [ACTION_DATA], TIDAK ADA SATU PUN TUGAS YANG AKAN TEREKSEKUSI.
+➡️ HANYA BERBICARA TANPA ACTION DATA = TIDAK BERGUNA.
 
-**Bentuk 1 — Satu aksi:**
-[ACTION_DATA]{"action":"add","task":{"text":"Belajar React","category":"otak","time":"⏰ 10:00 - 12:00"}}
+====================================================
+CONTOH — RESPON SALAH ❌
+====================================================
+User: "Tambah tugas Coding Bangkit, Pengajian, Journaling"
+AI:  "Siap! Saya sudah menambahkan ketiga tugas tersebut ke dashboardmu."
+     ^^ INI SALAH! Tidak ada [ACTION_DATA], tugas TIDAK tersimpan.
 
-**Bentuk 2 — Banyak aksi (ARRAY):**
-[ACTION_DATA][{"action":"add","task":{"text":"Belajar React","category":"otak","time":"⏰ 10:00 - 12:00"}},{"action":"add","task":{"text":"Lari pagi","category":"fisik","time":"⏱️ 30 Menit"}},{"action":"complete","taskId":"abc123"}]
+====================================================
+CONTOH — RESPON BENAR ✅
+====================================================
+User: "Tambah tugas Coding Bangkit, Pengajian, Journaling"
+AI:  "Siap! Langsung saya masukkan ketiga tugas ke dashboard."
+     [ACTION_DATA][{"action":"add","task":{"text":"Coding Bangkit","category":"disiplin","time":""}},{"action":"add","task":{"text":"Pengajian","category":"disiplin","time":""}},{"action":"add","task":{"text":"Journaling","category":"disiplin","time":""}}]
+     ^^ INI BENAR! Ada [ACTION_DATA] → tugas akan tersimpan.
 
-### PARAMETER:
-- action: "add" | "edit" | "delete" | "complete"
-- taskId: WAJIB untuk edit/delete/complete. Ambil dari daftar tugas di bawah.
-- task.text: Deskripsi tugas (wajib untuk add)
-- task.category: "fisik" | "otak" | "disiplin"
-- task.time: "⏰ HH:MM - HH:MM" atau "⏱️ X Jam/Menit" atau ""
+====================================================
+CARA KERJA
+====================================================
+1. Baca perintah user dengan saksama.
+2. Jika user minta aksi tugas → susun [ACTION_DATA] yang sesuai.
+3. Tulis respon chat singkat (maks 2 paragraf, hangat, to the point).
+4. AKHIRI respon dengan [ACTION_DATA] — JANGAN LUPA!
+5. Jika user minta BANYAK tugas, GUNAKAN FORMAT ARRAY.
 
-### GAYA BICARA:
-- Bahasa Indonesia yang hangat, memotivasi, tapi to the point.
+====================================================
+FORMAT [ACTION_DATA]
+====================================================
+[Satu tugas]
+[ACTION_DATA]{"action":"add","task":{"text":"...","category":"fisik|otak|disiplin","time":"..."}}
+
+[Banyak tugas — WAJIB ARRAY]
+[ACTION_DATA][{"action":"add","task":{...}},{"action":"add","task":{...}}]
+
+[Aksi lain: edit / delete / complete]
+[ACTION_DATA]{"action":"edit","taskId":"abc123","task":{"text":"..."}}
+[ACTION_DATA]{"action":"delete","taskId":"abc123"}
+[ACTION_DATA]{"action":"complete","taskId":"abc123"}
+
+====================================================
+DAFTAR TUGAS SAAT INI:
+====================================================
+${tasksString || "(Belum ada tugas)"}
+
+====================================================
+GAYA BICARA:
+====================================================
+- Bahasa Indonesia hangat, memotivasi, to the point.
 - Maksimal 2-3 paragraf. Jangan bertele-tele.
-
-### DAFTAR TUGAS SAAT INI:
-${tasksString || "(Belum ada tugas)"}`;
+- Jangan tanya konfirmasi ulang — user sudah meminta, langsung kerjakan!`;
 
   // Filter history: ambil maksimal 12 pesan terakhir agar AI paham konteks lebih baik
   const memoryMessages = history.slice(-12).map(h => ({
