@@ -336,19 +336,34 @@ async function syncFromFirebase(email) {
   if (!useFirebase) return;
   const key = emailKey(email);
   const fbKey = sanitizeFirebaseKey(key);
-  try {
-    const snapshotPromise = firebase.database().ref('users/' + fbKey).once('value');
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Sync timeout")), 3000));
 
-    const snapshot = await Promise.race([snapshotPromise, timeoutPromise]);
-    const data = snapshot.val();
-    if (data) {
-      const users = getUsers();
-      users[key] = mergeUserData(users[key] || {}, data);
-      saveUsers(users);
+  // Coba sync dengan timeout 15 detik + retry 1x kalau gagal
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const snapshotPromise = firebase.database().ref('users/' + fbKey).once('value');
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Sync timeout")), 15000)
+      );
+
+      const snapshot = await Promise.race([snapshotPromise, timeoutPromise]);
+      const data = snapshot.val();
+      if (data) {
+        const users = getUsers();
+        users[key] = mergeUserData(users[key] || {}, data);
+        saveUsers(users);
+        console.log("✅ Data berhasil disinkron dari Firebase (percobaan ke-" + attempt + ")");
+      }
+      return; // Berhasil, keluar dari loop
+    } catch (err) {
+      if (attempt === 1) {
+        console.warn("⚠️ Sync percobaan ke-1 gagal: " + err.message + ". Mencoba lagi...");
+        // Tunggu 1 detik sebelum retry
+        await new Promise(r => setTimeout(r, 1000));
+      } else {
+        console.warn("❌ Sinkronisasi data dari Firebase gagal setelah 2 percobaan:", err.message);
+        console.warn("   Data lokal akan digunakan. Perubahan akan tetap tersimpan di perangkat ini.");
+      }
     }
-  } catch (err) {
-    console.warn("Gagal/Skip sinkronisasi data dari Firebase (melanjutkan login lokal):", err.message);
   }
 }
 
