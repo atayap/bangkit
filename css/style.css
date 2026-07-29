@@ -238,6 +238,33 @@ button, input{ font-family: inherit; }
 .auth-foot a{ color: var(--bone); border-bottom:1px solid var(--hairline); }
 .auth-foot a:hover{ border-color: var(--bone); }
 
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 24px 0;
+  color: var(--ash-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--glass-border-soft);
+}
+
+.field-hint {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ash-dim);
+  margin-top: 6px;
+  transition: color .2s var(--ease);
+}
+
 .form-note{
   margin-top: 20px;
   font-size: 11.5px;

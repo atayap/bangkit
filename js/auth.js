@@ -49,6 +49,52 @@ function emailKey(email) {
 }
 
 /* =========================================================
+   VALIDASI USERNAME — aturan: huruf kecil, angka, underscore,
+   tanpa spasi, panjang 3-15 karakter.
+   ========================================================= */
+function validateUsername(username) {
+  if (!username || username.length < 3) {
+    return { valid: false, error: "Nama panggilan minimal 3 karakter." };
+  }
+  if (username.length > 15) {
+    return { valid: false, error: "Nama panggilan maksimal 15 karakter." };
+  }
+  if (/\s/.test(username)) {
+    return { valid: false, error: "Nama panggilan tidak boleh mengandung spasi." };
+  }
+  if (/[A-Z]/.test(username)) {
+    return { valid: false, error: "Nama panggilan tidak boleh mengandung huruf besar. Gunakan huruf kecil semua." };
+  }
+  if (!/^[a-z0-9_]+$/.test(username)) {
+    return { valid: false, error: "Hanya huruf kecil, angka, dan underscore (_) yang diperbolehkan." };
+  }
+  return { valid: true, error: null };
+}
+
+/* =========================================================
+   TERJEMAHKAN FIREBASE ERROR — ubah kode error Firebase menjadi
+   pesan Indonesia yang bersih & ramah pengguna.
+   ========================================================= */
+function translateFirebaseError(error) {
+  const code = error.code || "";
+  const map = {
+    "auth/email-already-in-use": "Email ini sudah terdaftar. Silakan masuk saja.",
+    "auth/user-not-found": "Email belum terdaftar.",
+    "auth/wrong-password": "Email atau password salah.",
+    "auth/invalid-email": "Format email tidak valid.",
+    "auth/user-disabled": "Akun ini telah dinonaktifkan.",
+    "auth/too-many-requests": "Terlalu banyak percobaan. Coba lagi nanti.",
+    "auth/invalid-credential": "Email atau password salah.",
+    "auth/popup-closed-by-user": "Popup login ditutup. Silakan coba lagi.",
+    "auth/cancelled-popup-request": "Popup login dibatalkan.",
+    "auth/network-request-failed": "Koneksi internet bermasalah. Coba lagi.",
+    "auth/account-exists-with-different-credential": "Email ini sudah terdaftar dengan metode lain (Google). Silakan masuk dengan Google.",
+    "auth/weak-password": "Password terlalu lemah. Minimal 6 karakter.",
+  };
+  return map[code] || "Terjadi kesalahan. Silakan coba lagi.";
+}
+
+/* =========================================================
    LOADING BAR — strip ungu di pojok atas setiap kali
    navigasi halaman (login, logout, redirect, dll).
    ========================================================= */
@@ -162,7 +208,7 @@ async function registerUser({ name, email, password }) {
       }
       return { ok: true };
     } catch (err) {
-      return { ok: false, error: err.message };
+      return { ok: false, error: translateFirebaseError(err) };
     }
   } else {
     const users = getUsers();
@@ -211,7 +257,7 @@ async function loginUser({ email, password }) {
       await syncFromFirebase(key);
       return { ok: true };
     } catch (err) {
-      return { ok: false, error: err.message };
+      return { ok: false, error: translateFirebaseError(err) };
     }
   } else {
     const users = getUsers();
@@ -257,7 +303,7 @@ async function loginWithGoogle() {
     await syncFromFirebase(key);
     return { ok: true, user: user };
   } catch (err) {
-    return { ok: false, error: err.message };
+    return { ok: false, error: translateFirebaseError(err) };
   }
 }
 

@@ -15,8 +15,8 @@
       <div class="mark-word">Bangkit</div>
     </div>
 
-    <h1 class="auth-title">Masuk / Daftar</h1>
-    <p class="auth-sub">Masuk atau buat akun baru secara instan menggunakan Google.</p>
+    <h1 class="auth-title">Selamat Datang</h1>
+    <p class="auth-sub">Masuk atau buat akun untuk mulai melacak produktivitasmu.</p>
 
     <div id="error-msg" class="field-error" style="margin-bottom: 14px;"></div>
 
@@ -24,14 +24,20 @@
       <svg class="google-icon" viewBox="0 0 24 24">
         <path d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.51 0-6.377-2.87-6.377-6.4 0-3.53 2.867-6.4 6.377-6.4 1.582 0 3.02.58 4.14 1.536l3.014-3.015C19.314 2.33 15.996 1 12.24 1 5.926 1 1 5.925 1 12.2s4.926 11.2 11.24 11.2c6.512 0 10.814-4.58 10.814-11 0-.662-.053-1.303-.153-1.915H12.24z"/>
       </svg>
-      Masuk dengan Google
+      Lanjut dengan Google
     </button>
+
+    <div class="auth-divider"><span>atau</span></div>
+
+    <a href="login.html" class="btn btn-ghost" style="display: block; text-align: center; margin-bottom: 10px;">Masuk dengan Email</a>
+    <a href="register.html" class="btn btn-ghost" style="display: block; text-align: center;">Daftar dengan Email</a>
+
     <div id="firebase-alert" style="display:none; font-size:11px; color:#d8b4b4; margin-top:14px; border-left: 2px solid #5a3c3c; padding-left:10px; font-family: var(--font-mono); line-height: 1.5;">
       <strong>Penting:</strong> Konfigurasi Firebase belum diatur di <code>js/firebase-config.js</code>. Mohon atur kredensial Anda agar Google Sign-In dapat berfungsi secara normal.
     </div>
 
     <div class="form-note" style="margin-top: 26px;">
-      Data progresmu tersimpan aman secara privat. Dengan Google Sign-In, data Anda dikaitkan dengan akun Google Anda secara aman.
+      Data progresmu tersimpan aman secara privat. Dengan akun email, data tersimpan di browser dan Firebase (jika terkonfigurasi).
     </div>
   </div>
 </div>
@@ -60,9 +66,16 @@
     const errEl = document.getElementById("error-msg");
     errEl.style.display = "none";
     
+    showPageLoading();
+
     const result = await loginWithGoogle();
     if (result.ok) {
-      navigateTo("dashboard.html");
+      const user = getCurrentUser();
+      if (user && !user.onboarded) {
+        navigateTo("onboarding.html");
+      } else {
+        navigateTo("dashboard.html");
+      }
     } else {
       errEl.textContent = result.error;
       errEl.style.display = "block";

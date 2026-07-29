@@ -22,8 +22,9 @@
 
     <form id="onboarding-form">
       <div class="field">
-        <label>Nama Panggilan</label>
+        <label>Nama Panggilan (Username)</label>
         <input type="text" id="username-input" placeholder="Misal: satria123" required minlength="3" maxlength="15" autocomplete="off">
+        <div class="field-hint" id="username-hint">Hanya huruf kecil, angka, dan underscore — tanpa spasi</div>
       </div>
       <button type="submit" class="btn" style="width: 100%; margin-top: 14px;">Simpan & Lanjutkan</button>
     </form>
@@ -50,11 +51,31 @@
     window.location.href = "dashboard.html";
   }
 
-  // Pre-fill dengan nama dari Google jika ada
   const input = document.getElementById("username-input");
+  const hintEl = document.getElementById("username-hint");
+
+  // Pre-fill dengan nama dari Google jika ada
   if (user && user.name && user.name !== "Pengguna Google" && user.name !== "Pengguna Baru") {
-    input.value = user.name;
+    // Bersihkan nama Google agar sesuai aturan username
+    const cleaned = user.name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+    input.value = cleaned;
   }
+
+  // Validasi username langsung saat diketik
+  input.addEventListener("input", () => {
+    // Hapus spasi otomatis
+    input.value = input.value.replace(/\s/g, "");
+    // Hapus huruf kapital otomatis
+    input.value = input.value.toLowerCase();
+
+    const val = input.value;
+    const validation = validateUsername(val);
+    if (val.length > 0 && !validation.valid) {
+      hintEl.style.color = "#ffb4c9";
+    } else {
+      hintEl.style.color = "";
+    }
+  });
 
   document.getElementById("onboarding-form").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -62,13 +83,11 @@
     errEl.style.display = "none";
 
     const nameVal = input.value.trim();
-    if (nameVal.length < 3) {
-      errEl.textContent = "Nama panggilan minimal 3 karakter.";
-      errEl.style.display = "block";
-      return;
-    }
-    if (nameVal.length > 15) {
-      errEl.textContent = "Nama panggilan maksimal 15 karakter.";
+
+    // Validasi username menggunakan fungsi shared
+    const validation = validateUsername(nameVal);
+    if (!validation.valid) {
+      errEl.textContent = validation.error;
       errEl.style.display = "block";
       return;
     }
